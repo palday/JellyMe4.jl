@@ -1,0 +1,8 @@
+name = "JellyMe4"
+uuid = "19ac8677-9a15-4623-9afd-84acc6165ce7"
+authors = ["Phillip Alday <phillip.alday@mpi.nl>"]
+version = "0.1.0"
+
+[deps]
+MixedModels = "ff71e718-51f3-5ec2-a782-8ffcbfa3c316"
+RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
