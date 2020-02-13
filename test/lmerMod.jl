@@ -32,6 +32,16 @@ const GLMM = GeneralizedLinearMixedModel
         @test objective(jlmm) ≈ objective(rlmm) atol=0.001
         @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
 
+        # single scalar RE is different because RCall converts the single-entry θ
+        # to a scalar value, which we have to correct
+        # of course, this isn't a problem in the other direction, because
+        # the scalar-vector distinction for θ is missing in R
+        jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1|Subject)),sleepstudy), REML=false)
+        rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1|Subject),sleepstudy,REML=FALSE)")
+
+        @test jlmm.θ ≈ rlmm.θ atol=0.001
+        @test objective(jlmm) ≈ objective(rlmm) atol=0.001
+        @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
     end
     @testset "put lmerMod" begin
         ### from Julia ###
