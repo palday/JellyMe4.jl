@@ -6,3 +6,13 @@ version = "0.1.0"
 [deps]
 MixedModels = "ff71e718-51f3-5ec2-a782-8ffcbfa3c316"
 RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
+
+[compat]
+julia = "1.3"
+MixedModels = "2.2"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
