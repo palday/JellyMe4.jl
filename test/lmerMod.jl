@@ -2,7 +2,7 @@ using RCall, MixedModels, Test
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
 
-@testset "RCall for lme4" begin
+@testset "lmerMod" begin
     reval("""
     if(!require(lme4)){
         # use tmp for tests if lme4 isn't available
@@ -12,8 +12,11 @@ const GLMM = GeneralizedLinearMixedModel
         library(lme4)
     }""")
 
-    @testset "lmerMod" begin
-        sleepstudy = rcopy(R"sleepstudy")
+    # this is available in MixedModels.dataset(:sleepstudy) but with different
+    # capitalization than in R
+    sleepstudy = rcopy(R"sleepstudy")
+
+    @testset "get lmerMod" begin
         ### from R ###
         jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy), REML=false)
         rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
@@ -29,8 +32,10 @@ const GLMM = GeneralizedLinearMixedModel
         @test objective(jlmm) ≈ objective(rlmm) atol=0.001
         @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
 
+    end
+    @testset "put lmerMod" begin
         ### from Julia ###
-        fit!(jlmm, REML=true)
+        jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy), REML=true)
         jm = Tuple([jlmm, sleepstudy])
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
@@ -41,6 +46,5 @@ const GLMM = GeneralizedLinearMixedModel
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
         @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
-
     end
 end

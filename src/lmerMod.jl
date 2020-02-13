@@ -1,9 +1,33 @@
-import RCall: rcopy, RClass, rcopytype, reval, S4Sxp, sexp, protect, unprotect, sexpclass, @rput, @rget
+import MixedModels: LinearMixedModel,
+                    setθ!,
+                    updateL!
+import RCall: rcopy,
+              RClass,
+              rcopytype,
+              reval,
+              S4Sxp,
+              sexp,
+              protect,
+              unprotect,
+              sexpclass,
+              @rput,
+              @rget
 # if RCall is available, then so is DataFrames
 import DataFrames: DataFrame
 # from R
 # note that weights are not extracted
+# TODO: document weights issue and warn
 function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
+    # this only extracts the name within the call, not the actual weights
+    try
+        wts = rcopy(s[:call][:weights])
+        @error "weights are not supported"
+    catch err
+        if !isa(err, BoundsError) # something we weren't expecting
+            throw(err)
+        end
+        # no weights defined, we continue on our way
+    end
     f = rcopy(s[:call][:formula])
     data = rcopy(s[:frame])
     θ = rcopy(s[:theta])
@@ -22,11 +46,15 @@ end
 rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
 
 # TODO: add alternative methods for tbl
+# TODO: document weights issue
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
 #          SET_VECTOR_ELT() can only be applied to a 'list', not a 'character'
 function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}) where T
     m, tbl = x
+    if !isempty(m.sqrtwts)
+        @error "weights are not currently supported"
+    end
     # should we assume the user is smart enough?
     reval("library(lme4)")
 

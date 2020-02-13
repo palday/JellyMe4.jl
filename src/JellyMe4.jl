@@ -1,5 +1,9 @@
 module JellyMe4
 
-greet() = print("Hello World!")
+include("lmerMod.jl")
 
+export rcopy
+export rcopytype
+export sexp
+export sexpclass
 end # module
