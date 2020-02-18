@@ -74,9 +74,9 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     formula = convert_julia_to_r(m.formula)
 
     θ = m.θ
-
+    rsteps = 1
     REML = m.optsum.REML ? "TRUE" : "FALSE"
-    jellyme4_par = m.optsum.final
+    jellyme4_theta = m.optsum.final
     fval = m.optsum.fmin
     feval = m.optsum.feval
     conv = m.optsum.returnvalue == :SUCCESS ? 0 : 1
@@ -85,28 +85,20 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     # yes, it overwrites any variable named data, but you shouldn't be naming
     # your variables that anyway!
     @rput jellyme4_data
-    @rput jellyme4_par
+    @rput jellyme4_theta
 
     r = """
-         parsedFormula <- lFormula(formula=$(formula),
-                                   data=jellyme4_data,
-                                   REML=$(REML))
-         # this bit should probably be reworked to extract the julia fields
-         # but it's easier to just let lme4 do a single step and the internal
-         # representations are slightly different anyway
-         devianceFunction <- do.call(mkLmerDevfun, parsedFormula)
-         optimizerOutput <- optimizeLmer(devianceFunction,start=jellyme4_par,
-                                         control=list(maxeval=1,calc.derivs=FALSE))
-         optimizerOutput\$feval <- $(feval)
-         optimizerOutput\$message <- "$(message)"
-         optimizerOutput\$optimizer <- "$(optimizer)"
-
-         rho <- environment(devianceFunction)
-
-         mkMerMod(rho = rho,
-                 opt = optimizerOutput,
-                 reTrms = parsedFormula\$reTrms,
-                 fr = parsedFormula\$fr)
+    jellyme4_mod <- lmer(formula = $(formula),
+                           data=jellyme4_data,
+                           REML=$(REML),
+                           control=lmerControl(optimizer="nloptwrap",
+                                                optCtrl=list(maxeval=$(rsteps)),
+                                    calc.derivs=FALSE),
+                            start=list(theta=jellyme4_theta))
+     jellyme4_mod@optinfo\$feval <- $(feval)
+     jellyme4_mod@optinfo\$message <- "$(message)"
+     jellyme4_mod@optinfo\$optimizer <- "$(optimizer)"
+     jellyme4_mod
     """
     @debug r
     r = reval(r)
