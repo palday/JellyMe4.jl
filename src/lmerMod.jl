@@ -89,7 +89,7 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
 
     r = """
          parsedFormula <- lFormula(formula=$(formula),
-                                   data=data,
+                                   data=jellyme4_data,
                                    REML=$(REML))
          # this bit should probably be reworked to extract the julia fields
          # but it's easier to just let lme4 do a single step and the internal

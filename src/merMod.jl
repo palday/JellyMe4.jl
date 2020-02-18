@@ -13,7 +13,7 @@ import RCall: rcopy,
               @rget
 
 function sexp(::Type{RClass{:merMod}}, x::MixedModel{T}) where T
-    throw(ArgumentError("You must use a Tuple(MixedModel, DataFrame), not just a model"))
+    throw(ArgumentError("You must use a Tuple([MixedModel, DataFrame]), not just a model"))
 end
 
 sexpclass(x::MixedModel{T}) where T = RClass{:merMod}
