@@ -9,6 +9,7 @@ const GLMM = GeneralizedLinearMixedModel
         # use tmp for tests if lme4 isn't available
         .libPaths("/tmp")
         lib <- .libPaths()[1L]
+        warning(lib)
         install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
         library(lme4)
     }""")
