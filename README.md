@@ -176,12 +176,13 @@ This is alpha software. It has some functionality that should work well for comm
 Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer.
 
 Only a subset of all the options available in `MixedModels` and `lme4` are supported. Unsupported things should break in an obvious way, but here's a list of things that are more commonly used but may break non obviously:
-- *custom contrast coding*. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.
-- *advanced models in either language* (e.g., `zerocorr!` in Julia or `||` in R, which are not completely synonymous anyway). There's not really a trivial way to deal with this at the moment, sorry.
-- *fancy transformations within model formulae*, especially those that have different names (e.g. `scale()` in R). If in doubt, pre-transform your data in the dataframe before fitting.
-- *missing data* is handled differently in R and Julia, both in its representation and when it's eliminated. If in doubt, remove missing data before fitting models for consistency.
-- *all the different ways to specify binomial data in R* Just stick to Bernoulli models with a numeric 0-1 response if you can.
-- *R variables named `data` will be overwritten* We need a scratch variable when moving things to R, so we use the identifier `data`. You shouldn't be using this name anyway because it creates weird errors when you mess things up ("object of type closure is not subsettable") because there is an R function of the same name.
+- **custom contrast coding**. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.
+- **advanced models in either language** (e.g., `zerocorr!` in Julia or `||` in R, which are not completely synonymous anyway). There's not really a trivial way to deal with this at the moment, sorry.
+- **fancy transformations within model formulae**, especially those that have different names (e.g. `scale()` in R). If in doubt, pre-transform your data in the dataframe before fitting.
+- **missing data** is handled differently in R and Julia, both in its representation and when it's eliminated. If in doubt, remove missing data before fitting models for consistency.
+- **All the different ways to specify binomial data in R**. Just stick to Bernoulli models with a numeric 0-1 response if you can.
+- **Almost everything related to GLMMs**. This should error when unsupported model types are encountered, and currently only the Julia-to-R direction works.
+- **A number of scratch variables in R prefixed by `jellyme4_` are created.** We need scratch variables when moving things to R, so we use  identifiers beginning with `jellyme4_`.
 
 Finally, to work its magic, this package hooks into `MixedModels` and `lme4` internals. `lme4`'s internals are quite stable now and this is taken advantage of by several other R packages (`ordinal`, `gamm4`, `robustlmm`). `MixedModels` are also fairly stable for the core things, but not everything. I am a contributor to `MixedModels`, so I generally know when something is going to change, but things may still break with changing `MixedModels` versions, especially for major version changes.
 
