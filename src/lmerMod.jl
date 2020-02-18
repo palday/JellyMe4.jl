@@ -70,14 +70,8 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     reval("library(lme4)")
 
     data = tbl
-    formula = String(Symbol(m.formula))
-    any([occursin(":(log(",formula),
-        occursin(":(log10(",formula),
-        occursin(":(log(",formula),
-        occursin(":(exp(",formula),
-        occursin(":(zscore(",formula),
-        ]) &&
-        throw(ArgumentError("Formula contains a transformation."))
+    formula = convert_julia_to_r(m.formula)
+
     θ = m.θ
 
     REML = m.optsum.REML ? "TRUE" : "FALSE"
