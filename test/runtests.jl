@@ -3,3 +3,4 @@ using Test
 
 include("merMod.jl")
 include("lmerMod.jl")
+include("glmerMod.jl")

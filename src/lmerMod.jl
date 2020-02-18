@@ -32,7 +32,7 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     f = rcopy(s[:call][:formula])
     data = rcopy(s[:frame])
     θ = rcopy(s[:theta])
-        reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
+    reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
 
     m = LinearMixedModel(f,data)
     m.optsum.REML = reml
@@ -57,7 +57,6 @@ end
 rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
 
 # TODO: add alternative methods for tbl
-# TODO: document weights issue
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
 #          SET_VECTOR_ELT() can only be applied to a 'list', not a 'character'
