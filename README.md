@@ -171,7 +171,7 @@ MachineC -0.374  0.301
 
 ## Limitations and warnings
 
-This is alpha software. It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. I haven't figured out yet how to set up continuous integration for the combined R-Julia environment, so I only run the tests locally. In other words, even for the parts that do work for me, they may not work for you.
+This is alpha software. It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. The testuite only tests against a single version of R and the current version of lme4. In other words, even for the parts that do work for me, they may not work for you.
 
 Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer.
 
