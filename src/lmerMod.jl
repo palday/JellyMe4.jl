@@ -56,7 +56,6 @@ end
 
 rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
 
-# TODO: add alternative methods for tbl
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
 #          SET_VECTOR_ELT() can only be applied to a 'list', not a 'character'
@@ -71,13 +70,13 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     # should we assume the user is smart enough?
     reval("library(lme4)")
 
-    data = tbl
+    jellyme4_data = tbl
     formula = convert_julia_to_r(m.formula)
 
     θ = m.θ
 
     REML = m.optsum.REML ? "TRUE" : "FALSE"
-    par = m.optsum.final
+    jellyme4_par = m.optsum.final
     fval = m.optsum.fmin
     feval = m.optsum.feval
     conv = m.optsum.returnvalue == :SUCCESS ? 0 : 1
@@ -85,8 +84,8 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     message = "fit with MixedModels.jl"
     # yes, it overwrites any variable named data, but you shouldn't be naming
     # your variables that anyway!
-    @rput data
-    @rput par
+    @rput jellyme4_data
+    @rput jellyme4_par
 
     r = """
          parsedFormula <- lFormula(formula=$(formula),
@@ -96,7 +95,7 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
          # but it's easier to just let lme4 do a single step and the internal
          # representations are slightly different anyway
          devianceFunction <- do.call(mkLmerDevfun, parsedFormula)
-         optimizerOutput <- optimizeLmer(devianceFunction,start=par,
+         optimizerOutput <- optimizeLmer(devianceFunction,start=jellyme4_par,
                                          control=list(maxeval=1,calc.derivs=FALSE))
          optimizerOutput\$feval <- $(feval)
          optimizerOutput\$message <- "$(message)"
