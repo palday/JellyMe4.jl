@@ -66,6 +66,9 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     if !isempty(m.sqrtwts)
         @error "weights are not currently supported"
     end
+
+    m.optsum.feval > 0 || throw(ArgumentError("Model must be fitted"))
+
     # should we assume the user is smart enough?
     reval("library(lme4)")
 
