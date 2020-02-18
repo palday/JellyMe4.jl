@@ -9,7 +9,8 @@ logistic(x)  = 1 / (1 + exp(-x))
 @testset "glmerMod" begin
     ### from Julia ###
     @testset "put glmerMod" begin
-        dat = MixedModels.dataset(:verbagg);
+        # TODO: remove upon next MixedModels.jl release
+        dat = dataset(:verbagg);
         jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
                     dat, Bernoulli());
 
