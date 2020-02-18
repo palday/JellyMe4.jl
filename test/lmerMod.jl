@@ -1,4 +1,6 @@
 using RCall, MixedModels, Test
+using StatsBase: zscore
+using Tables: columntable
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
 
@@ -36,17 +38,23 @@ const GLMM = GeneralizedLinearMixedModel
         # to a scalar value, which we have to correct
         # of course, this isn't a problem in the other direction, because
         # the scalar-vector distinction for θ is missing in R
-        jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1|Subject)),sleepstudy), REML=false)
-        rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1|Subject),sleepstudy,REML=FALSE)")
+        @testset "scalar RE" begin
+            jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1|Subject)),sleepstudy), REML=false)
+            rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1|Subject),sleepstudy,REML=FALSE)")
 
-        @test jlmm.θ ≈ rlmm.θ atol=0.001
-        @test objective(jlmm) ≈ objective(rlmm) atol=0.001
-        @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+            @test jlmm.θ ≈ rlmm.θ atol=0.001
+            @test objective(jlmm) ≈ objective(rlmm) atol=0.001
+            @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+        end
     end
+
     @testset "put lmerMod" begin
         ### from Julia ###
-        jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy), REML=true)
+        jlmm = LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy)
         jm = Tuple([jlmm, sleepstudy])
+        # unfitted model
+        @test_throws ArgumentError @rput jm
+        fit!(jlmm, REML=true)
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
         @test rcopy(R"REMLcrit(jm)") ≈ objective(jlmm)
@@ -56,5 +64,27 @@ const GLMM = GeneralizedLinearMixedModel
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
         @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
+
+        @testset "columntable" begin
+            jm = Tuple([jlmm, columntable(sleepstudy)]);
+            @rput jm;
+        end
+
+        @testset "transformations" begin
+            sleepstudy[!,:Days2] = sleepstudy.Days .+ 1
+            @rput sleepstudy;
+            R"m <- lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
+            jlmm = fit!(LMM(@formula(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject)),sleepstudy), REML=false)
+            jm = Tuple([jlmm, sleepstudy])
+            @rput jm;
+            @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
+            @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
+
+            jlmm = fit!(LMM(@formula(Reaction ~ 1 + round(Days) + (1|Subject)),sleepstudy), REML=false)
+            jm = Tuple([jlmm, sleepstudy]);
+
+            @test_throws ArgumentError (@rput jm)
+        end
+
     end
 end
