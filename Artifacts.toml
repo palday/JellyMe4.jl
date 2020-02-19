@@ -1,7 +1,0 @@
-[TestData]
-git-tree-sha1 = ""
-lazy = true
-
-    [[TestData.download]]
-    sha256 = ""
-    url = ""
