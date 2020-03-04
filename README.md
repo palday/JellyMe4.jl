@@ -11,16 +11,23 @@ One of the difficulties in transitioning to a new programming language is not ju
 
 ## Installation
 
-`JellyMe4` is not yet registered in the Julia package registry and must be installed by
+`JellyMe4` is now registered in the Julia package registry and can be installed by
 ```julia
 julia> using Pkg
-julia> Pkg.add(PackageSpec(url="https://github.com/palday/JellyMe4.jl"))
+julia> Pkg.add("JellyMe4")
 
 ```
 or, in the pkg REPL,
 ```julia
-(@v1.4) pkg> add https://github.com/palday/JellyMe4.jl
+(@v1.4) pkg> add JellyMe4
 ```
+
+To get the latest pre-release features, you can install the development version:
+```julia
+(@v1.4) pkg> add JellyMe4#master
+```
+
+Generally speaking, the development version should work, but especially until version 1.0, there is no guarantee that there won't be breaking changes compared to the latest release.
 
 ## Basic Usage
 
