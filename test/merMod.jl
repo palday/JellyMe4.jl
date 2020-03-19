@@ -11,7 +11,10 @@ const GLMM = GeneralizedLinearMixedModel
         lib <- .libPaths()[1L]
         warning("installing lme4")
         warning(lib)
-        install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
+        # this should only occur on CIs 
+        # the Linux CI installs lme4 via apt beforehand
+        # and there are binary builds for Mac and Windows
+        install.packages("lme4",repos="https://cloud.r-project.org", libs=lib, type="binary")
         library(lme4)
     }""")
 
