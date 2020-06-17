@@ -1,5 +1,6 @@
 using RCall, MixedModels, Test
 using StatsBase: zscore
+import StatsModels: SeqDiffCoding
 using Tables: columntable
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
@@ -50,10 +51,13 @@ const GLMM = GeneralizedLinearMixedModel
         @testset "contrasts" begin
             reval("""
             data(cake)
-            cake$rr <- with(cake, replicate:recipe)
+            cake\$rr <- with(cake, replicate:recipe)
             """)
             rlmm = rcopy(R"fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
             @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
+            # rlmm = rcopy(R"""fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
+            #                              contrasts=list(temperature=contr.helmert))""");
+            # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
         end
     end
 
@@ -96,11 +100,11 @@ const GLMM = GeneralizedLinearMixedModel
         end
 
         @testset "contrasts" begin
-            reval("""
+            cake = rcopy(reval("""
             data(cake)
-            cake$rr <- with(cake, replicate:recipe)
-            """)
-            cake = rcopy(R"cake")
+            cake\$rr <- with(cake, replicate:recipe)
+            cake
+            """))
             jlmm = fit(MixedModel, @formula(angle ~ recipe * temperature + (1|rr)),
                        cake, REML=false, contrasts=Dict(:temperature => SeqDiffCoding()))
             jm = Tuple([jlmm, cake])
