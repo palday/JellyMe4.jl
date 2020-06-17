@@ -95,5 +95,16 @@ const GLMM = GeneralizedLinearMixedModel
             @test_throws ArgumentError (@rput jm)
         end
 
+        @testset "contrasts" begin
+            reval("""
+            data(cake)
+            cake$rr <- with(cake, replicate:recipe)
+            """)
+            cake = rcopy(R"cake")
+            jlmm = fit(MixedModel, @formula(angle ~ recipe * temperature + (1|rr)),
+                       cake, REML=false, contrasts=Dict(:temperature => SeqDiffCoding()))
+            jm = Tuple([jlmm, cake])
+            @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
+        end
     end
 end

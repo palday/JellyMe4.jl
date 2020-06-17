@@ -16,9 +16,31 @@ function get_r_contrasts(rdf)
                                labels=rcopy(R"colnames(contrasts($(rdf[c])))")) for c in cnames)
 end
 
-function set_r_contrasts(rdf, formula)
+"""
+    set the contrasts on an R dataframe
+    this of course has a side effect: it changes the R dataframe
+"""
+
+function set_r_contrasts!(rdfname, formula)
     fixefform = first(formula.rhs)
 
-    #cc.matrix
-    #cc.termnames
+    for tt in fixefform.terms
+        if typeof(tt) <: CategoricalTerm
+            @info tt.sym
+            R"""
+            jellyme_contrasts <- $(tt.contrasts.matrix)
+            colnames(jellyme_contrasts) <- $(tt.contrasts.termnames)
+            """
+            # we need rdfname to be interpolated normally before the R macros stuff is called
+            reval("""contrasts($(rdfname)[, "$(tt.sym)"]) <- jellyme_contrasts""")
+        elseif typeof(tt) <: InteractionTerm && any( typeof(tx) <: CategoricalTerm for tx in tt.terms)
+            # do nothing -- unless you're doing something really crazy,
+            # then this should be handled by the coding of the first-order terms
+            # if you are doing something that crazy, then you know enough linear algebra
+            # to copy and interpret the relevant matrices directly
+            @info "contrasts on interaction terms are assumed to decompose into products of contrasts on the first-order terms"
+            @info "(if you don't know what that means, you're probably fine)"
+        end
+    end
+    rdfname
 end

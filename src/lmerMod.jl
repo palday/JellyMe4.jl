@@ -92,6 +92,8 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     @rput jellyme4_data
     @rput jellyme4_theta
 
+    set_r_contrasts!("jellyme4_data", m.formula)
+
     r = """
     jellyme4_mod <- lmer(formula = $(formula),
                            data=jellyme4_data,
