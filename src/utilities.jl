@@ -32,7 +32,11 @@ function set_r_contrasts!(rdfname, formula)
             rownames(jellyme_contrasts) <- $(tt.contrasts.levels)
             """
             # we need rdfname to be interpolated normally before the R macros stuff is called
-            reval("""contrasts($(rdfname)[, "$(tt.sym)"]) <- jellyme_contrasts""")
+            reval("""
+            # we need to be double-plus sure these are factors
+            $(rdfname)[, "$(tt.sym)"] <- factor($(rdfname)[, "$(tt.sym)"])
+            contrasts($(rdfname)[, "$(tt.sym)"]) <- jellyme_contrasts
+            """)
         elseif typeof(tt) <: InteractionTerm && any( typeof(tx) <: CategoricalTerm for tx in tt.terms)
             # do nothing -- unless you're doing something really crazy,
             # then this should be handled by the coding of the first-order terms
