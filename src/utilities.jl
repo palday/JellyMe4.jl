@@ -26,10 +26,10 @@ function set_r_contrasts!(rdfname, formula)
 
     for tt in fixefform.terms
         if typeof(tt) <: CategoricalTerm
-            @info tt.sym
             R"""
             jellyme_contrasts <- $(tt.contrasts.matrix)
             colnames(jellyme_contrasts) <- $(tt.contrasts.termnames)
+            rownames(jellyme_contrasts) <- $(tt.contrasts.levels)
             """
             # we need rdfname to be interpolated normally before the R macros stuff is called
             reval("""contrasts($(rdfname)[, "$(tt.sym)"]) <- jellyme_contrasts""")
