@@ -52,7 +52,7 @@ const GLMM = GeneralizedLinearMixedModel
             reval("""
             data(cake)
             cake\$rr <- with(cake, replicate:recipe)
-            """)
+            """);
             rlmm = rcopy(R"fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
             @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
             # rlmm = rcopy(R"""fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
@@ -104,10 +104,11 @@ const GLMM = GeneralizedLinearMixedModel
             data(cake)
             cake\$rr <- with(cake, replicate:recipe)
             cake
-            """))
+            """));
             jlmm = fit(MixedModel, @formula(angle ~ recipe * temperature + (1|rr)),
-                       cake, REML=false, contrasts=Dict(:temperature => SeqDiffCoding()))
-            jm = Tuple([jlmm, cake])
+                       cake, REML=false, contrasts=Dict(:temperature => SeqDiffCoding()));
+            jm = Tuple([jlmm, cake]);
+            @rput jm;
             @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
         end
     end
