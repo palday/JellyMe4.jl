@@ -22,19 +22,27 @@ import Tables: ColumnTable
 # note that weights are not extracted
 # TODO: document weights issue and warn
 function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
+
+    # these try blocks should probably be changed to an examination of the indices
     # this only extracts the name within the call, not the actual weights
     try
         wts = rcopy(s[:call][:weights])
         @error "weights are not supported"
     catch err
-        if !isa(err, BoundsError) # something we weren't expecting
+        if !isa(err, BoundsError) # this is the error we were expecting
             throw(err)
         end
         # no weights defined, we continue on our way
     end
 
-    if !isnothing(rcopy(s[:call][:contrasts]))
+    try
+        contrasts = rcopy(s[:call][:contrasts])
         @error "Contrasts must be specified in the dataframe, not the lmer() call"
+    catch err
+        if !isa(err, BoundsError) # this is the error we were expecting
+            throw(err)
+        end
+        # no extra contrasts defined, we continue on our way
     end
 
     f = rcopy(s[:call][:formula])
