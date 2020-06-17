@@ -38,5 +38,14 @@ logistic(x)  = 1 / (1 + exp(-x))
             @rput jm;
         end
 
+        @testset "contrasts" begin
+            jlmm = fit(MixedModel, @formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
+                        dat, Bernoulli(), contrasts=Dict(:gender => EffectsCoding(),
+                                                         :btypes => EffectsCoding()));
+            jm = Tuple([jlmm, dat]);
+            @rput jm;
+            @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
+        end
+
     end
 end
