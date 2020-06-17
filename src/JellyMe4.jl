@@ -13,6 +13,7 @@ export sexpclass
 #     global TestData = artifact"TestData"
 # end
 
+include("utilities.jl")
 include("formula.jl")
 include("merMod.jl")
 include("lmerMod.jl")

@@ -11,10 +11,13 @@ import RCall: rcopy,
               unprotect,
               sexpclass,
               @rput,
-              @rget
+              @rget,
+              @R_str
+
 # if RCall is available, then so is DataFrames
 import DataFrames: DataFrame
 import Tables: ColumnTable
+
 # from R
 # note that weights are not extracted
 # TODO: document weights issue and warn
@@ -31,10 +34,12 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     end
     f = rcopy(s[:call][:formula])
     data = rcopy(s[:frame])
+    contrasts = get_r_contasts(s[:frame])
+
     θ = rcopy(s[:theta])
     reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
 
-    m = LinearMixedModel(f,data)
+    m = LinearMixedModel(f, data, contrasts=contrasts)
     m.optsum.REML = reml
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     try

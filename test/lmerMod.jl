@@ -46,6 +46,15 @@ const GLMM = GeneralizedLinearMixedModel
             @test objective(jlmm) ≈ objective(rlmm) atol=0.001
             @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
         end
+
+        @testset "contrasts" begin
+            reval("""
+            data(cake)
+            cake$rr <- with(cake, replicate:recipe)
+            """)
+            rlmm = rcopy(R"fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
+            @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
+        end
     end
 
     @testset "put lmerMod" begin
