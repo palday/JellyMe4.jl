@@ -32,9 +32,14 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         end
         # no weights defined, we continue on our way
     end
+
+    if !isnothing(rcopy(s[:call][:contrasts]))
+        @error "Contrasts must be specified in the dataframe, not the lmer() call"
+    end
+
     f = rcopy(s[:call][:formula])
     data = rcopy(s[:frame])
-    contrasts = get_r_contasts(s[:frame])
+    contrasts = get_r_contrasts(s[:frame])
 
     θ = rcopy(s[:theta])
     reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
