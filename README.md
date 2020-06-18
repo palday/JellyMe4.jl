@@ -183,7 +183,7 @@ This is alpha software. It has some functionality that should work well for comm
 Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer.
 
 Only a subset of all the options available in `MixedModels` and `lme4` are supported. Unsupported things should break in an obvious way, but here's a list of things that are more commonly used but may break non obviously:
-- **custom contrast coding**. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.
+- ~~**custom contrast coding**. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.~~ This should work if you're not doing anything weird with your interaction terms.
 - **advanced models in either language** (e.g., `zerocorr!` in Julia or `||` in R, which are not completely synonymous anyway). There's not really a trivial way to deal with this at the moment, sorry.
 - **fancy transformations within model formulae**, especially those that have different names (e.g. `scale()` in R). If in doubt, pre-transform your data in the dataframe before fitting.
 - **missing data** is handled differently in R and Julia, both in its representation and when it's eliminated. If in doubt, remove missing data before fitting models for consistency.

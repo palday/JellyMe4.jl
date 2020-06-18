@@ -11,30 +11,48 @@ import RCall: rcopy,
               unprotect,
               sexpclass,
               @rput,
-              @rget
+              @rget,
+              @R_str
+
 # if RCall is available, then so is DataFrames
 import DataFrames: DataFrame
 import Tables: ColumnTable
+
 # from R
 # note that weights are not extracted
 # TODO: document weights issue and warn
 function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
+
+    # these try blocks should probably be changed to an examination of the indices
     # this only extracts the name within the call, not the actual weights
     try
         wts = rcopy(s[:call][:weights])
         @error "weights are not supported"
     catch err
-        if !isa(err, BoundsError) # something we weren't expecting
+        if !isa(err, BoundsError) # this is the error we were expecting
             throw(err)
         end
         # no weights defined, we continue on our way
     end
+
+    try
+        contrasts = rcopy(s[:call][:contrasts])
+        @error "Contrasts must be specified in the dataframe, not the lmer() call"
+    catch err
+        if !isa(err, BoundsError) # this is the error we were expecting
+            throw(err)
+        end
+        # no extra contrasts defined, we continue on our way
+    end
+
     f = rcopy(s[:call][:formula])
     data = rcopy(s[:frame])
+    contrasts = get_r_contrasts(s[:frame])
+
     θ = rcopy(s[:theta])
     reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
 
-    m = LinearMixedModel(f,data)
+    m = LinearMixedModel(f, data, contrasts=contrasts)
     m.optsum.REML = reml
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     try
@@ -86,6 +104,8 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     # your variables that anyway!
     @rput jellyme4_data
     @rput jellyme4_theta
+
+    set_r_contrasts!("jellyme4_data", m.formula)
 
     r = """
     jellyme4_mod <- lmer(formula = $(formula),

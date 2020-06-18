@@ -123,6 +123,9 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     @rput jellyme4_data
     @rput jellyme4_theta
     @rput jellyme4_beta
+
+    set_r_contrasts!("jellyme4_data", m.formula)
+
     r = """
         jellyme4_mod <- glmer(formula = $(formula),
                                data=jellyme4_data,
