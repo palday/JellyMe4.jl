@@ -3,8 +3,9 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://palday.github.io/JellyMe4.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://palday.github.io/JellyMe4.jl/dev)
 [![Build Status](https://travis-ci.com/palday/JellyMe4.jl.svg?branch=master)](https://travis-ci.com/palday/JellyMe4.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/palday/JellyMe4.jl?svg=true)](https://ci.appveyor.com/project/palday/JellyMe4-jl)
 [![Codecov](https://codecov.io/gh/palday/JellyMe4.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/palday/JellyMe4.jl)
+
+<!-- [![Build Status](https://ci.appveyor.com/api/projects/status/github/palday/JellyMe4.jl?svg=true)](https://ci.appveyor.com/project/palday/JellyMe4-jl) -->
 
 ## Purpose
 One of the difficulties in transitioning to a new programming language is not just learning how to do things in the new language, but the difference in the package ecosystem. `RCall` helps with both aspects when moving from R to Julia, at least when it comes to basic data manipulation. `JellyMe4` takes advantage of `RCall`'s extensibility to provide a way to transfer mixed-effects models fit between R's `lme4` and Julia's `MixedEffectsModels`. This means that it is now possible to fit a model in Julia, but then take advantage of existing R packages for examing the model such as `car` and `effects`.
