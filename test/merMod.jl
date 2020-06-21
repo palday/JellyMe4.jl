@@ -11,7 +11,7 @@ const GLMM = GeneralizedLinearMixedModel
         lib <- .libPaths()[1L]
         warning("installing lme4")
         warning(lib)
-        # this should only occur on CIs 
+        # this should only occur on CIs
         # the Linux CI installs lme4 via apt beforehand
         # and there are binary builds for Mac and Windows
         install.packages("lme4",repos="https://cloud.r-project.org", libs=lib, type="binary")
@@ -24,5 +24,9 @@ const GLMM = GeneralizedLinearMixedModel
     jlmm = fit!(LMM(@formula(Reaction ~ 1 + round(Days) + (1|Subject)),sleepstudy), REML=false)
     @testset "bare model" begin
         @test_throws ArgumentError (@rput jlmm)
+    end
+    @testset "reversed tuple" begin
+        jm = (sleepstudy, jlmm);
+        @test_throws ArgumentError (@rput jm)
     end
 end
