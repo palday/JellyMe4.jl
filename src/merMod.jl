@@ -1,5 +1,6 @@
 import MixedModels: MixedModel
-
+import Tables: ColumnTable
+import DataFrames: DataFrame
 import RCall: rcopy,
               RClass,
               rcopytype,
@@ -17,3 +18,11 @@ function sexp(::Type{RClass{:merMod}}, x::MixedModel{T}) where T
 end
 
 sexpclass(x::MixedModel{T}) where T = RClass{:merMod}
+
+# we could in theory support the other ordering by re-ordering and passing on
+# but that introduces additional maintainance work and encourages messy style
+function sexp(::Type{RClass{:merMod}}, x::Tuple{Union{DataFrame, ColumnTable}, MixedModel})
+    throw(ArgumentError("The order in your Tuple is reversed. It should be (Model, Data)"))
+end
+
+sexpclass(x::Tuple{Union{DataFrame, ColumnTable}, MixedModel}) where T = RClass{:merMod}
