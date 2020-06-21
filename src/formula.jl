@@ -3,6 +3,8 @@ function convert_julia_to_r(f::StatsModels.FormulaTerm)::AbstractString
 
     formula = replace(formula, ":(log" => "(log")
     formula = replace(formula, ":(exp" => "(exp")
+    # should we consider supporting division on the lhs?
+    # what about nesting syntax on the rhs?
     # zscore won't work here because the operations within a formula are broadcast
     # and never see the whole array
     # formula = replace(formula, ":(zscore" => "(scale")

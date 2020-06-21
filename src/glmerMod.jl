@@ -24,6 +24,10 @@ import Tables: ColumnTable
  function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
      throw(ArgumentError("Sorry, getting GLMMs from R has not been implemented yet."))
 #     # this only extracts the name within the call, not the actual weights
+# error on these families: quasi, quasibinomial, quasipoisson
+# error on these families: gaussian, Gamma, inverse.gaussian
+# I() syntax
+# all the different ways to specify binomial models
 #     try
 #         wts = rcopy(s[:call][:weights])
 #         @error "weights are not supported"
@@ -71,8 +75,15 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     # R families: binomial, gaussian, Gamma, inverse.gaussian, poisson
     #             quasi, quasibinomial, quasipoisson
     # should we @warn for the way GLMM deviance is defined in lme4?
-    if family == "Bernoulli"
+    # we construct this piece-by-piece because this keeps the warnings
+    # and everything in sync
+    supported = ("Bernoulli", "Binomial", "Poisson")
+    if family in ("Bernoulli", "Binomial")
         family = "binomial"
+    elseif family == "Poisson"
+        family = "poisson"
+    elseif family in ("Gamma","Gaussian","InverseGaussian")
+        throw(ArgumentError("GLMMs with dispersion parameters are known to give incorrect results in MixedModels.jl (see PR#291), aborting."))
     else
         throw(ArgumentError("Family $family is not supported"))
     end
@@ -111,6 +122,8 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
 
     jellyme4_theta = m.θ
     jellyme4_beta = m.β
+    jellyme4_weights = m.wt
+    length(jellyme4_weights) > 0 || (jellyme4_weights = nothing)
     fval = m.optsum.fmin
     feval = m.optsum.feval
     conv = m.optsum.returnvalue == :SUCCESS ? 0 : 1
@@ -123,6 +136,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     @rput jellyme4_data
     @rput jellyme4_theta
     @rput jellyme4_beta
+    @rput jellyme4_weights
 
     set_r_contrasts!("jellyme4_data", m.formula)
 
@@ -131,6 +145,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
                                data=jellyme4_data,
                                family=$family(link="$link"),
                                nAGQ=$(nAGQ),
+                               weights=jellyme4_weights,
                                control=glmerControl(optimizer="nloptwrap",
                                                     optCtrl=list(maxeval=$(rsteps)),
                                         calc.derivs=FALSE),
