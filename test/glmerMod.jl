@@ -37,31 +37,36 @@ logistic(x)  = 1 / (1 + exp(-x))
             #       check nAQG and fast options
             # TODO: remove upon next MixedModels.jl release
             dat = dataset(:verbagg);
-            # we max out at 1 scalre RE for the nAGQ tests
-            jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)),
-                        dat, Bernoulli());
 
             @testset "unfitted model" begin
+                # we max out at 1 scalar RE for the nAGQ tests
+                jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)),
+                            dat, Bernoulli());
                 jm = Tuple([jlmm, dat]);
                 # unfitted model
                 @test_throws ArgumentError @rput jm
             end
 
             @testset "nAGQ" begin
+                # we max out at 1 scalar RE for the nAGQ tests
+                jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)),
+                            dat, Bernoulli());
                 fit!(jlmm; fast=false, nAGQ=9)
+                jm = (jlmm, dat);
                 @rput jm;
                 # @test_warn Regex(".*categorical.*") @rput jm;
 
-                @test  rcopy(R"""jm@devcomp$dims["nAGQ"]""") == jm.optstum.nAGQ
+                @test  rcopy(R"""jm@devcomp$dims["nAGQ"]""") == jlmm.optsum.nAGQ
                 # note the really high tolerances
                 @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol=0.1
                 @test rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol=0.1
             end
 
             @testset "Laplace" begin
-                jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
+                # we max out at 1 scalar RE for the nAGQ tests
+                jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)),
                             dat, Bernoulli());
-                fit!(jlmm; fast=true)
+                fit!(jlmm);
                 jm = Tuple([jlmm, dat])
                 @rput jm;
 
@@ -69,11 +74,15 @@ logistic(x)  = 1 / (1 + exp(-x))
                 @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol=0.1
                 @test rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol=0.5;
             end
-        end
 
-        @testset "columntable" begin
-            jm = Tuple([jlmm, columntable(dat)]);
-            @rput jm;
+            @testset "columntable" begin
+                jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)),
+                            dat, Bernoulli());
+                fit!(jlmm);
+                jm = Tuple([jlmm, columntable(dat)]);
+                @rput jm;
+            end
+
         end
 
         @testset "Binomial" begin
@@ -81,16 +90,15 @@ logistic(x)  = 1 / (1 + exp(-x))
             dat  = dataset(:cbpp);
             dat.rate = dat.incid ./ dat.hsz;
             jlmm = fit(MixedModel, @formula(rate ~ 1 + period + (1|herd)),
-                      dat, Binomial(); wts=float(dat.hsz));
+                      dat, Binomial(); wts=float(dat.hsz), fast=true);
 
             jm = (jlmm, dat);
-            fit!(jlmm, fast=true)
             @rput jm;
             # @test_warn Regex(".*categorical.*") @rput jm;
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol=0.001
             @test_broken rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol=0.001
             # this is where the weights have their biggest impact
-            @test stderr(jlmm) ≈ rcopy(R"""coef(summary(jm))[,"Std. Error"]""") atol=0.001
+            @test stderror(jlmm) ≈ rcopy(R"""coef(summary(jm))[,"Std. Error"]""") atol=0.001
             @test rcopy(R"logLik(jm)") ≈ loglikelihood(jlmm) atol=0.001
         end
 
