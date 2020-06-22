@@ -1,8 +1,24 @@
 import MixedModels: GeneralizedLinearMixedModel,
                     setθ!,
                     updateL!
-import Distributions: Distribution
-import GLM: Link
+import Distributions: Distribution,
+                      Bernoulli,
+                      Binomial,
+                      Gamma,
+                      Gaussian,
+                      InverseGaussian,
+                      Poisson
+
+import GLM: Link,
+            CauchitLink,
+            CloglogLink,
+            LogitLink,
+            IdentityLink,
+            InverseLink,
+            LogLink,
+            ProbitLink,
+            SqrtLink
+
 import RCall: rcopy,
               RClass,
               rcopytype,
@@ -18,48 +34,90 @@ import RCall: rcopy,
 import DataFrames: DataFrame, categorical!
 import CategoricalArrays: CategoricalArray
 import Tables: ColumnTable
+
 # # from R
-# # note that weights are not extracted
-# # TODO: document weights issue and warn
- function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
-     throw(ArgumentError("Sorry, getting GLMMs from R has not been implemented yet."))
-#     # this only extracts the name within the call, not the actual weights
-# error on these families: quasi, quasibinomial, quasipoisson
-# error on these families: gaussian, Gamma, inverse.gaussian
-# I() syntax
-# all the different ways to specify binomial models
-#     try
-#         wts = rcopy(s[:call][:weights])
-#         @error "weights are not supported"
-#     catch err
-#         if !isa(err, BoundsError) # something we weren't expecting
-#             throw(err)
-#         end
-#         # no weights defined, we continue on our way
-#     end
-#     f = rcopy(s[:call][:formula])
-#     data = rcopy(s[:frame])
-#     θ = rcopy(s[:theta])
-#     reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
-#
-#     m = LinearMixedModel(f,data)
-#     m.optsum.REML = reml
-#     m.optsum.feval = rcopy(s[:optinfo][:feval])
-#     try
-#         m.optsum.final = rcopy(s[:optinfo][:val])
-#     catch err
-#         if isa(err, MethodError)
-#             # this happens if θ has length one, i.e. a single scalar RE
-#             m.optsum.final = [rcopy(s[:optinfo][:val])]
-#             θ = [θ]
-#         else
-#             throw(err)
-#         end
-#     end
-#     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
-#     m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
-#     m.optsum.fmin = reml ? rcopy(s[:devcomp][:cmp][:REML]) : rcopy(s[:devcomp][:cmp][:dev])
-#     updateL!(setθ!(m, θ))
+function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
+    data = nothing;
+    # try
+    #     data = rcopy(s[:frame]);
+    # catch err
+    #     if !isa(err, DimensionMismatch) # matrix columns -- cbind!
+    #         throw(err)
+    #     end
+    # go back up to the original data frame
+    # this will only work if that data frame is still available in the
+    # current environment. There may be a better way to unwind this
+    # but that will involve more R black magic
+    data = rcopy(R"eval($(s[:call][:data]))");
+    # end
+    wts = []
+    try
+        wts = rcopy(s[:call][:weights])
+        wts = data[!, wts]
+    catch err
+        if !isa(err, BoundsError)
+            throw(err)
+        end
+        # no weights defined, we continue on our way
+        try
+            wts = rcopy(s[:resp][:n])
+        catch err
+            if !isa(err, BoundsError)
+                throw(err)
+            end
+            # no weights here either, we continue on our way
+        end
+    end
+    # the function terms are constructed but reference non existent vars
+    # need to somehow recontr
+    f = convert_r_to_julia(s[:call][:formula])
+    family = rcopy(R"$(s[:resp])$family$family")
+    if family in ("quasi", "quasibinomial", "quasipoisson")
+        throw(ArgumentError("quasi families are not supported"))
+    elseif family in ("gaussian", "Gamma", "inverse.gaussian")
+        throw(ArgumentError("GLMMs with dispersion parameters are known to give incorrect results in MixedModels.jl (see PR#291), aborting."))
+    elseif family in ("poisson", "binomial")
+        family = titlecase(family)
+    else
+        throw(ArgumentError("Unknown and hence unsupported family: $family"))
+    end
+
+    family = eval(Symbol(family))
+
+    link = rcopy(R"$(s[:resp])$family$link")
+    link in ["logit", "probit", "cauchit",
+             "log", "identity", "inverse", "sqrt",
+             "cloglog"] || throw(ArgumentError("Link $urlink not supported"))
+    link = titlecase(link) * "Link"
+    link = eval(Symbol(link))
+
+    nAGQ = rcopy(s[:devcomp][:dims][:nAGQ])
+    fast = nAGQ == 0 ? true : false
+    if nAGQ == 0
+        nAGQ = 1
+    end
+    θ = rcopy(s[:theta])
+
+    m = GeneralizedLinearMixedModel(f,data, family())#, link(), wts=wts)
+    return m
+    m.optsum.feval = rcopy(s[:optinfo][:feval])
+    try
+        m.optsum.final = rcopy(s[:optinfo][:val])
+    catch err
+        if isa(err, MethodError)
+            # this happens if θ has length one, i.e. a single scalar RE
+            m.optsum.final = [rcopy(s[:optinfo][:val])]
+            θ = [θ]
+        else
+            throw(err)
+        end
+    end
+    m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
+    m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
+    m.optsum.fmin = rcopy(s[:devcomp][:cmp][:dev])
+    m.optsum.nAGQ = nAGQ
+    setpar! = fast ? setθ! : setβθ!
+    updateL!(setpar!(m, θ))
 end
 
 rcopytype(::Type{RClass{:glmerMod}}, s::Ptr{S4Sxp}) = GeneralizedLinearMixedModel

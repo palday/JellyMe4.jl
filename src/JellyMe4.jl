@@ -1,6 +1,7 @@
 module JellyMe4
 
 using StatsModels
+using MixedModels
 
 export rcopy
 export rcopytype

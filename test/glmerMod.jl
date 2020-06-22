@@ -7,6 +7,29 @@ const GLMM = GeneralizedLinearMixedModel
 logistic(x)  = 1 / (1 + exp(-x))
 
 @testset "glmerMod" begin
+    reval("""
+    if(!require(lme4)){
+        # use tmp for tests if lme4 isn't available
+        .libPaths("/tmp")
+        lib <- .libPaths()[1L]
+        install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
+        library(lme4)
+    }""")
+
+    ### from R ###
+    @testset "get glmerMod" begin
+        # from lme4 ?cbpp
+        R"""
+        ## response as a matrix
+        m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                      family = binomial, data = cbpp, nAGQ=0)
+         ## response as a vector of probabilities and usage of argument "weights"
+         m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
+                      family = binomial, data = cbpp)
+        """
+
+    end
+
     ### from Julia ###
     @testset "put glmerMod" begin
         @testset "Bernoulli" begin
@@ -119,6 +142,5 @@ logistic(x)  = 1 / (1 + exp(-x))
             @rput jm;
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)");
         end
-
     end
 end
