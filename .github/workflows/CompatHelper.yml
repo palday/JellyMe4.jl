@@ -3,8 +3,9 @@ name: CompatHelper
 on:
   schedule:
     - cron: '00 00 * * *'
-  pull_request
-
+  pull_request:
+    branches:
+      - master
 jobs:
   CompatHelper:
     runs-on: ubuntu-latest
