@@ -135,6 +135,8 @@ logistic(x)  = 1 / (1 + exp(-x))
         end
 
         @testset "contrasts" begin
+            dat = dataset(:verbagg);
+
             jlmm = fit(MixedModel, @formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
                         dat, Bernoulli(), contrasts=Dict(:gender => EffectsCoding(),
                                                          :btypes => EffectsCoding()));
