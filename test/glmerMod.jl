@@ -1,6 +1,7 @@
 using RCall, MixedModels, Test
 using StatsBase: zscore
 using Tables: columntable
+import GLM: Link
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
 
@@ -18,15 +19,100 @@ logistic(x)  = 1 / (1 + exp(-x))
 
     ### from R ###
     @testset "get glmerMod" begin
-        # from lme4 ?cbpp
-        R"""
-        ## response as a matrix
-        m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                      family = binomial, data = cbpp, nAGQ=0)
-         ## response as a vector of probabilities and usage of argument "weights"
-         m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
-                      family = binomial, data = cbpp)
-        """
+        # R"""
+        # # from lme4 ?cbpp
+        # ## response as a matrix
+        # m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+        #               family = binomial, data = cbpp, nAGQ=0)
+        #  ## response as a vector of probabilities and usage of argument "weights"
+        #  m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
+        #               family = binomial, data = cbpp)
+        # """
+
+
+        @testset "Binomial" begin
+
+            R"""
+            data(cbpp)
+            cbpp$rate <- with(cbpp, incidence/size)
+            rlmm <- glmer(rate ~ period + (1 | herd), weights = size,
+                          family = binomial, data = cbpp)
+            """
+            rlmm = rcopy(R"rlmm");
+            @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
+            @test_broken rcopy(R"-2 * logLik(rlmm)") ≈ deviance(rlmm) atol=0.001
+            # this is where the weights have their biggest impact
+            @test stderror(rlmm) ≈ rcopy(R"""coef(summary(rlmm))[,"Std. Error"]""") atol=0.001
+            @test rcopy(R"logLik(rlmm)") ≈ loglikelihood(rlmm) atol=0.001
+
+            @testset "contrasts" begin
+            #     reval("""
+            #     data(cake)
+            #     cake\$rr <- with(cake, replicate:recipe)
+            #     """);
+            #     rlmm = rcopy(R"fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
+            #     @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
+            #     # rlmm = rcopy(R"""fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
+            #     #                              contrasts=list(temperature=contr.helmert))""");
+            #     # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
+            end
+
+            @testset "alternative response specifications"
+                @testset "cbind" begin
+                end
+
+                @testset "proportion computed in line"
+                end
+            end
+
+
+            @testset "Bernoulli" begin
+                @testset "nAGQ and scalar RE" begin
+                R"""
+                rlmm <- glmer(r2 ~ Anger + Gender + btype + situ + (1|id),
+                                    family = binomial, data=VerbAgg, nAGQ=4)
+                """
+
+                rlmm = rcopy(R"rlmm");
+                @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
+                @test_broken rcopy(R"-2 * logLik(rlmm)") ≈ deviance(rlmm) atol=0.001
+                # this is where the weights have their biggest impact
+                @test stderror(rlmm) ≈ rcopy(R"""coef(summary(rlmm))[,"Std. Error"]""") atol=0.001
+                @test rcopy(R"logLik(rlmm)") ≈ loglikelihood(rlmm) atol=0.001
+                end
+
+                @testset "Laplace and probit link" begin
+                    # TODO add tests for each link
+                    R"""
+                    rlmm <- glmer(r2 ~ Anger + Gender + btype + situ + (1|id),
+                                        family = binomial(link=probit), data=VerbAgg)
+                    """
+
+                    rlmm = rcopy(R"rlmm");
+                    @test string(Link(rlmm.resp)) == "ProbitLink()"
+                    @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
+                    @test_broken rcopy(R"-2 * logLik(rlmm)") ≈ deviance(rlmm) atol=0.001
+                    # this is where the weights have their biggest impact
+                    @test stderror(rlmm) ≈ rcopy(R"""coef(summary(rlmm))[,"Std. Error"]""") atol=0.001
+                    @test rcopy(R"logLik(rlmm)") ≈ loglikelihood(rlmm) atol=0.001
+                end
+            end
+
+        end
+
+        @testset "Poisson and fast fit" begin
+            R"""
+            # from the lme4 docs
+            form <- TICKS ~ YEAR + HEIGHT + (1|BROOD) + (1|INDEX) + (1|LOCATION)
+            rlmm  <- glmer(form, family="poisson",data=grouseticks, nAGQ=0)
+            """
+            rlmm = rcopy(R"rlmm");
+            @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
+            @test_broken rcopy(R"-2 * logLik(rlmm)") ≈ deviance(rlmm) atol=0.001
+            # this is where the weights have their biggest impact
+            @test stderror(rlmm) ≈ rcopy(R"""coef(summary(rlmm))[,"Std. Error"]""") atol=0.001
+            @test rcopy(R"logLik(rlmm)") ≈ loglikelihood(rlmm) atol=0.001
+        end
 
     end
 
@@ -82,7 +168,6 @@ logistic(x)  = 1 / (1 + exp(-x))
                 jm = Tuple([jlmm, columntable(dat)]);
                 @rput jm;
             end
-
         end
 
         @testset "Binomial" begin
@@ -102,7 +187,7 @@ logistic(x)  = 1 / (1 + exp(-x))
             @test rcopy(R"logLik(jm)") ≈ loglikelihood(jlmm) atol=0.001
         end
 
-        @testset "Poisson" begin
+        @testset "Poisson and fast fit" begin
             # TODO: remove upon next MixedModels.jl release
             center(v::AbstractVector) = v .- (sum(v) / length(v))
             dat = dataset(:grouseticks);
@@ -114,6 +199,7 @@ logistic(x)  = 1 / (1 + exp(-x))
             fit!(jlmm, fast=true) # problems with this one in fast=false
             @rput jm;
             # @test_warn Regex(".*categorical.*") @rput jm;
+            @test rcopy(R"""jm@devcomp$dims["nAGQ"]""") == 0;
             # note the really high tolerances
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol=0.001
             @test_broken rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol=0.5
