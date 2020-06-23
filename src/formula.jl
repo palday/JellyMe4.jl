@@ -4,7 +4,7 @@ import RCall: rcopy,
               @rput,
               @rget,
               @R_str
-              
+
 function convert_julia_to_r(f::StatsModels.FormulaTerm)::AbstractString
     formula = string(f)
 
@@ -22,6 +22,7 @@ function convert_julia_to_r(f::StatsModels.FormulaTerm)::AbstractString
     formula = replace(formula, "&" => ":")
 end
 
+# NOTE: this is known to yet to work properly!
 function convert_r_to_julia(f::RObject{LangSxp})::StatsModels.FormulaTerm
     _, lhs, rhs = rcopy(R"as.character($f)")
     cbind =  match(r"cbind\((.*),(.*)\)", lhs);
@@ -41,8 +42,8 @@ function convert_r_to_julia(f::RObject{LangSxp})::StatsModels.FormulaTerm
 
     end
     vv = eval(:@formula($vv))
-    @info vv
-    @info typeof(vv)
+    # @info vv
+    # @info typeof(vv)
     return vv
 end
 
