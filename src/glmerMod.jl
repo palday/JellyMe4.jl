@@ -1,6 +1,7 @@
 import MixedModels: GeneralizedLinearMixedModel,
-                    setθ!,
-                    updateL!
+                    pirls!,
+                    setβθ!,
+                    setθ!
 import Distributions: Distribution,
                       Bernoulli,
                       Binomial,
@@ -92,14 +93,13 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     link = eval(Symbol(link))
 
     nAGQ = rcopy(s[:devcomp][:dims][:nAGQ])
-    fast = nAGQ == 0 ? true : false
+    fast = nAGQ == 0
     if nAGQ == 0
         nAGQ = 1
     end
-    θ = rcopy(s[:theta])
 
-    m = GeneralizedLinearMixedModel(f,data, family())#, link(), wts=wts)
-    return m
+
+    m = GeneralizedLinearMixedModel(f,data, family(), link(), wts=wts)
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     try
         m.optsum.final = rcopy(s[:optinfo][:val])
@@ -107,17 +107,17 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
         if isa(err, MethodError)
             # this happens if θ has length one, i.e. a single scalar RE
             m.optsum.final = [rcopy(s[:optinfo][:val])]
-            θ = [θ]
         else
             throw(err)
         end
     end
+    θ = m.optsum.final
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
     m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
     m.optsum.fmin = rcopy(s[:devcomp][:cmp][:dev])
     m.optsum.nAGQ = nAGQ
     setpar! = fast ? setθ! : setβθ!
-    updateL!(setpar!(m, θ))
+    return pirls!(setpar!(m, θ), fast)
 end
 
 rcopytype(::Type{RClass{:glmerMod}}, s::Ptr{S4Sxp}) = GeneralizedLinearMixedModel
