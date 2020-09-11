@@ -26,4 +26,5 @@ Manifest.toml
 
 /dev/
 
+.vscode/
 *.*~
