@@ -24,6 +24,8 @@ end
 function set_r_contrasts!(rdfname, formula)
     fixefform = first(formula.rhs)
 
+    warned_on_contrasts = false
+
     for tt in fixefform.terms
         if typeof(tt) <: CategoricalTerm
             R"""
@@ -42,8 +44,11 @@ function set_r_contrasts!(rdfname, formula)
             # then this should be handled by the coding of the first-order terms
             # if you are doing something that crazy, then you know enough linear algebra
             # to copy and interpret the relevant matrices directly
-            @info "contrasts on interaction terms are assumed to decompose into products of contrasts on the first-order terms"
-            @info "(if you don't know what that means, you're probably fine)"
+            if !warned_on_contrasts
+                @info "contrasts on interaction terms are assumed to decompose into products of contrasts on the first-order terms"
+                @info "(if you don't know what that means, you're probably fine)"
+                warned_on_contrasts = true
+            end
         end
     end
     rdfname
