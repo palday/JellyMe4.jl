@@ -64,7 +64,7 @@ const GLMM = GeneralizedLinearMixedModel
     @testset "put lmerMod" begin
         ### from Julia ###
         jlmm = LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy)
-        jm = Tuple([jlmm, sleepstudy])
+        jm = (jlmm, sleepstudy)
         # unfitted model
         @test_throws ArgumentError @rput jm
         fit!(jlmm, REML=true)
@@ -73,13 +73,13 @@ const GLMM = GeneralizedLinearMixedModel
         @test rcopy(R"REMLcrit(jm)") ≈ objective(jlmm)
 
         fit!(jlmm, REML=false)
-        jm = Tuple([jlmm, sleepstudy])
+        jm = (jlmm, sleepstudy)
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
         @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
 
         @testset "columntable" begin
-            jm = Tuple([jlmm, columntable(sleepstudy)]);
+            jm = (jlmm, columntable(sleepstudy));
             @rput jm;
         end
 
@@ -88,13 +88,13 @@ const GLMM = GeneralizedLinearMixedModel
             @rput sleepstudy;
             R"m <- lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
             jlmm = fit!(LMM(@formula(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject)),sleepstudy), REML=false)
-            jm = Tuple([jlmm, sleepstudy])
+            jm = (jlmm, sleepstudy)
             @rput jm;
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
             @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
 
             jlmm = fit!(LMM(@formula(Reaction ~ 1 + round(Days) + (1|Subject)),sleepstudy), REML=false)
-            jm = Tuple([jlmm, sleepstudy]);
+            jm = (jlmm, sleepstudy);
 
             @test_throws ArgumentError (@rput jm)
         end
@@ -107,7 +107,7 @@ const GLMM = GeneralizedLinearMixedModel
             """));
             jlmm = fit(MixedModel, @formula(angle ~ recipe * temperature + (1|rr)),
                        cake, REML=false, contrasts=Dict(:temperature => SeqDiffCoding()));
-            jm = Tuple([jlmm, cake]);
+            jm = (jlmm, cake);
             @rput jm;
             @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
         end

@@ -157,7 +157,7 @@ sexpclass(x::Tuple{GeneralizedLinearMixedModel{T}, DataFrame}) where T = RClass{
 # generalize to ColumnTable, which is what MixedModels actually requires
 function sexp(ss::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}, ColumnTable}) where T
     m, t  = x
-    sexp(ss, Tuple([m, DataFrame(t)]))
+    sexp(ss, (m, DataFrame(t)))
 end
 
 sexpclass(x::Tuple{GeneralizedLinearMixedModel{T}, ColumnTable}) where T = RClass{:glmerMod}

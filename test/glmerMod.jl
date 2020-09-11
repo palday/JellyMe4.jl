@@ -14,7 +14,7 @@ logistic(x)  = 1 / (1 + exp(-x))
         jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
                     dat, Bernoulli());
 
-        jm = Tuple([jlmm, dat]);
+        jm = (jlmm, dat);
         # unfitted model
         @test_throws ArgumentError @rput jm
         fit!(jlmm, fast=false)
@@ -27,14 +27,14 @@ logistic(x)  = 1 / (1 + exp(-x))
         jlmm = GLMM(@formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
                     dat, Bernoulli());
         fit!(jlmm, fast=true)
-        jm = Tuple([jlmm, dat])
+        jm = (jlmm, dat)
         @rput jm;
         # note the really high tolerances
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol=0.1
         @test rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol=0.5;
 
         @testset "columntable" begin
-            jm = Tuple([jlmm, columntable(dat)]);
+            jm = (jlmm, columntable(dat));
             @rput jm;
         end
 
@@ -42,7 +42,7 @@ logistic(x)  = 1 / (1 + exp(-x))
             jlmm = fit(MixedModel, @formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
                         dat, Bernoulli(), contrasts=Dict(:gender => EffectsCoding(),
                                                          :btypes => EffectsCoding()));
-            jm = Tuple([jlmm, dat]);
+            jm = (jlmm, dat);
             @rput jm;
             @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
         end
