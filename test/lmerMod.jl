@@ -59,6 +59,27 @@ const GLMM = GeneralizedLinearMixedModel
             #                              contrasts=list(temperature=contr.helmert))""");
             # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
         end
+        
+        @testset "double-bar" begin
+            # double bar works because lme4 treats this internally as a rewrite rule into distinct terms
+            # the distinct terms are handled the same way in both languages, so everything is fine.
+            # printing differs a lot between languages, but that's life
+            
+            
+            reval("""
+            machines <- as.data.frame(nlme::Machines)
+            mach <- lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
+            """)
+            machines = rcopy(R"machines")
+            rlmm = rcopy(R"mach")
+            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
+            # as a cheat for comparing the covariance matrices, we use packages
+            @test first(rlmm.rePCA) ≈ first(jlmm.rePCA) atol=1e-3           
+    end
+
+        @testset "dummy" begin
+            # TODO
+        end
     end
 
     @testset "put lmerMod" begin
