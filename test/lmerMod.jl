@@ -74,7 +74,7 @@ const GLMM = GeneralizedLinearMixedModel
             rlmm = rcopy(R"mach")
             jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
             # as a cheat for comparing the covariance matrices, we use packages
-            @test first(rlmm.rePCA) ≈ first(jlmm.rePCA) atol=1e-3           
+            @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=1e-3           
     end
 
         @testset "dummy" begin
