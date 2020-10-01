@@ -9,6 +9,6 @@ function convert_julia_to_r(f::StatsModels.FormulaTerm)::AbstractString
 
     occursin(":(", formula) && throw(ArgumentError("Formula contains a transformation."))
 
-    occursin("zerocorr", formula) && throw(ArgumentError("zerocorr not supported"))
+    occursin("zerocorr", lowercase(formula)) && throw(ArgumentError("zerocorr not supported"))
     formula = replace(formula, "&" => ":")
 end
