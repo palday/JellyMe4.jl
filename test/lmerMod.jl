@@ -75,8 +75,8 @@ const GLMM = GeneralizedLinearMixedModel
             jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
             # as a cheat for comparing the covariance matrices, we use packages
             @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=1e-3           
-    end
-
+        end
+        
         @testset "dummy" begin
             # TODO
         end
@@ -131,6 +131,22 @@ const GLMM = GeneralizedLinearMixedModel
             jm = (jlmm, cake);
             @rput jm;
             @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
+        end
+        
+                
+        @testset "zerocorr" begin
+            machines = rcopy(R"as.data.frame(nlme::Machines)")
+            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + zerocorr(1+Machine|Worker)), machines)
+            
+            
+            rlmm = rcopy(R"mach")
+            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
+            # as a cheat for comparing the covariance matrices, we use packages
+            @test first(rlmm.rePCA) ≈ first(jlmm.rePCA) atol=1e-3           
+        end
+        
+        @testset "fulldummy" begin
+            # TODO
         end
     end
 end
