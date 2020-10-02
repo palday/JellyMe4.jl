@@ -144,7 +144,7 @@ Machine: C   13.9167     1.40579   9.89956   <1e-22
 ───────────────────────────────────────────────────
 julia> # LinearMixedModel doesn't keep of the original dataframe,
 julia> # so we need to package it up
-julia> m_machines = Tuple([m, machines]);
+julia> m_machines = (m, machines);
 julia> @rput m_machines;
 julia> R"summary(m_machines)"
 RObject{VecSxp}

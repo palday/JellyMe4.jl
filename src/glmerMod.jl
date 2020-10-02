@@ -206,7 +206,8 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
                                weights=jellyme4_weights,
                                control=glmerControl(optimizer="nloptwrap",
                                                     optCtrl=list(maxeval=$(rsteps)),
-                                        calc.derivs=FALSE),
+                                        calc.derivs=FALSE,
+                                        check.nobs.vs.nRE= "warning"),
                                 start=list($(betastart)theta=jellyme4_theta))
          jellyme4_mod@optinfo\$feval <- $(feval)
          jellyme4_mod@optinfo\$message <- "$(message)"
@@ -230,7 +231,7 @@ sexpclass(x::Tuple{GeneralizedLinearMixedModel{T}, DataFrame}) where T = RClass{
 # generalize to ColumnTable, which is what MixedModels actually requires
 function sexp(ss::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}, ColumnTable}) where T
     m, t  = x
-    sexp(ss, Tuple([m, DataFrame(t)]))
+    sexp(ss, (m, DataFrame(t)))
 end
 
 sexpclass(x::Tuple{GeneralizedLinearMixedModel{T}, ColumnTable}) where T = RClass{:glmerMod}

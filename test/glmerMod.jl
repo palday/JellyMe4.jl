@@ -32,12 +32,12 @@ logistic(x)  = 1 / (1 + exp(-x))
 
         @testset "Binomial" begin
 
-            R"""
+            reval("""
             data(cbpp)
             cbpp$rate <- with(cbpp, incidence/size)
             rlmm <- glmer(rate ~ period + (1 | herd), weights = size,
                           family = binomial, data = cbpp)
-            """
+            """)
             rlmm = rcopy(R"rlmm");
             @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
             @test_broken rcopy(R"-2 * logLik(rlmm)") ≈ deviance(rlmm) atol=0.001
@@ -57,7 +57,7 @@ logistic(x)  = 1 / (1 + exp(-x))
             #     # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
             end
 
-            @testset "alternative response specifications"
+            @testset "alternative response specifications" begin
                 @testset "cbind" begin
                 end
 
@@ -68,10 +68,10 @@ logistic(x)  = 1 / (1 + exp(-x))
 
             @testset "Bernoulli" begin
                 @testset "nAGQ and scalar RE" begin
-                R"""
+                reval("""
                 rlmm <- glmer(r2 ~ Anger + Gender + btype + situ + (1|id),
                                     family = binomial, data=VerbAgg, nAGQ=4)
-                """
+                """)
 
                 rlmm = rcopy(R"rlmm");
                 @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
@@ -83,10 +83,10 @@ logistic(x)  = 1 / (1 + exp(-x))
 
                 @testset "Laplace and probit link" begin
                     # TODO add tests for each link
-                    R"""
+                    reval("""
                     rlmm <- glmer(r2 ~ Anger + Gender + btype + situ + (1|id),
                                         family = binomial(link=probit), data=VerbAgg)
-                    """
+                    """)
 
                     rlmm = rcopy(R"rlmm");
                     @test string(Link(rlmm.resp)) == "ProbitLink()"
@@ -101,11 +101,11 @@ logistic(x)  = 1 / (1 + exp(-x))
         end
 
         @testset "Poisson and fast fit" begin
-            R"""
+            reval("""
             # from the lme4 docs
             form <- TICKS ~ YEAR + HEIGHT + (1|BROOD) + (1|INDEX) + (1|LOCATION)
             rlmm  <- glmer(form, family="poisson",data=grouseticks, nAGQ=0)
-            """
+            """)
             rlmm = rcopy(R"rlmm");
             @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
             @test_broken rcopy(R"-2 * logLik(rlmm)") ≈ deviance(rlmm) atol=0.001
@@ -234,7 +234,7 @@ logistic(x)  = 1 / (1 + exp(-x))
             jlmm = fit(MixedModel, @formula(r2 ~ 1+anger+gender+btype+situ+(1|subj)+(1|item)),
                         dat, Bernoulli(), contrasts=Dict(:gender => EffectsCoding(),
                                                          :btypes => EffectsCoding()));
-            jm = Tuple([jlmm, dat]);
+            jm = (jlmm, dat);
             @rput jm;
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)");
         end
