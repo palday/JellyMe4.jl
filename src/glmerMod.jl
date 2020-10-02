@@ -133,7 +133,8 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
                                nAGQ=$(nAGQ),
                                control=glmerControl(optimizer="nloptwrap",
                                                     optCtrl=list(maxeval=$(rsteps)),
-                                        calc.derivs=FALSE),
+                                        calc.derivs=FALSE,
+                                        check.nobs.vs.nRE= "warning"),
                                 start=list($(betastart)theta=jellyme4_theta))
          jellyme4_mod@optinfo\$feval <- $(feval)
          jellyme4_mod@optinfo\$message <- "$(message)"
