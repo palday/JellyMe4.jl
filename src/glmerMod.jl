@@ -101,23 +101,15 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
 
     m = GeneralizedLinearMixedModel(f,data, family(), link(), wts=wts)
     m.optsum.feval = rcopy(s[:optinfo][:feval])
-    try
-        m.optsum.final = rcopy(s[:optinfo][:val])
-    catch err
-        if isa(err, MethodError)
-            # this happens if θ has length one, i.e. a single scalar RE
-            m.optsum.final = [rcopy(s[:optinfo][:val])]
-        else
-            throw(err)
-        end
-    end
-    θ = m.optsum.final
+    θ = rcopyarray(s[:theta])
+    β = rcopyarray(s[:beta])
+    m.optsum.final = fast ? θ : [β; θ]
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
     m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
     m.optsum.fmin = rcopy(s[:devcomp][:cmp][:dev])
     m.optsum.nAGQ = nAGQ
     setpar! = fast ? setθ! : setβθ!
-    return pirls!(setpar!(m, θ), fast)
+    return pirls!(setpar!(m, m.optsum.final), fast)
 end
 
 rcopytype(::Type{RClass{:glmerMod}}, s::Ptr{S4Sxp}) = GeneralizedLinearMixedModel
