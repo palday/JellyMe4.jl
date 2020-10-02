@@ -49,26 +49,40 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     # this will only work if that data frame is still available in the
     # current environment. There may be a better way to unwind this
     # but that will involve more R black magic
-    data = rcopy(R"eval($(s[:call][:data]))");
+    data = rcopy(R"eval($(s[:call][:data]))")
     # end
+    
+    try
+        contrasts = rcopy(s[:call][:contrasts])
+        @error "Contrasts must be specified in the dataframe, not the glmer() call"
+    catch err
+        if !isa(err, BoundsError) # this is the error we were expecting
+            rethrow(err)
+        end
+        # no extra contrasts defined, we continue on our way
+    end
+    
+    contrasts = get_r_contrasts(s[:frame])
+    
     wts = []
     try
         wts = rcopy(s[:call][:weights])
         wts = data[!, wts]
     catch err
         if !isa(err, BoundsError)
-            throw(err)
+            rethrow(err)
         end
         # no weights defined, we continue on our way
         try
             wts = rcopy(s[:resp][:n])
         catch err
             if !isa(err, BoundsError)
-                throw(err)
+                rethrow(err)
             end
             # no weights here either, we continue on our way
         end
     end
+
     # the function terms are constructed but reference non existent vars
     # need to somehow recontr
     f = convert_r_to_julia(s[:call][:formula])
@@ -97,7 +111,6 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     if nAGQ == 0
         nAGQ = 1
     end
-
 
     m = GeneralizedLinearMixedModel(f,columntable(data), family(), link(), wts=wts)
     m.optsum.feval = rcopy(s[:optinfo][:feval])

@@ -19,17 +19,6 @@ logistic(x)  = 1 / (1 + exp(-x))
 
     ### from R ###
     @testset "get glmerMod" begin
-        # R"""
-        # # from lme4 ?cbpp
-        # ## response as a matrix
-        # m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-        #               family = binomial, data = cbpp, nAGQ=0)
-        #  ## response as a vector of probabilities and usage of argument "weights"
-        #  m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
-        #               family = binomial, data = cbpp)
-        # """
-
-
         @testset "Binomial" begin
 
             reval(raw"""
@@ -45,24 +34,30 @@ logistic(x)  = 1 / (1 + exp(-x))
             @test stderror(rlmm) ≈ rcopy(R"""coef(summary(rlmm))[,"Std. Error"]""") atol=0.1
             @test rcopy(R"logLik(rlmm)") ≈ loglikelihood(rlmm) atol=0.001
 
-            @testset "contrasts" begin
-            #     reval("""
-            #     data(cake)
-            #     cake\$rr <- with(cake, replicate:recipe)
-            #     """);
-            #     rlmm = rcopy(R"fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
-            #     @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
-            #     # rlmm = rcopy(R"""fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
-            #     #                              contrasts=list(temperature=contr.helmert))""");
-            #     # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
-            end
-
-            @testset "alternative response specifications" begin
+            @testset "alternative response specifications" begin            
+                # R"""
+                # # from lme4 ?cbpp
+                # ## response as a matrix
+                # m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                #               family = binomial, data = cbpp, nAGQ=0)
+                #  ## response as a vector of probabilities and usage of argument "weights"
+                #  m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
+                #               family = binomial, data = cbpp)
+                # """
+            
                 @testset "cbind" begin
                 end
 
                 @testset "proportion computed in line" begin
                 end
+            end
+
+            @testset "contrasts" begin
+                reval(raw"""
+                contrasts(cbpp$period) <- contr.helmert(levels(cbpp$period))
+                """)
+                rlmm = rcopy(R"fm1 <- glmer(rate ~ period + (1 | herd), weights = size,family = binomial, data = cbpp)");
+                @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
             end
 
 
