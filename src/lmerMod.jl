@@ -30,7 +30,7 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         @error "weights are not supported"
     catch err
         if !isa(err, BoundsError) # this is the error we were expecting
-            throw(err)
+            rethrow(err)
         end
         # no weights defined, we continue on our way
     end
@@ -40,7 +40,7 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         @error "Contrasts must be specified in the dataframe, not the lmer() call"
     catch err
         if !isa(err, BoundsError) # this is the error we were expecting
-            throw(err)
+            rethrow(err)
         end
         # no extra contrasts defined, we continue on our way
     end
