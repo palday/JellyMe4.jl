@@ -34,7 +34,7 @@ import RCall: rcopy,
 # if RCall is available, then so is DataFrames
 import DataFrames: DataFrame, categorical!
 import CategoricalArrays: CategoricalArray
-import Tables: ColumnTable
+import Tables: columntable, ColumnTable
 
 # # from R
 function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
@@ -99,7 +99,7 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     end
 
 
-    m = GeneralizedLinearMixedModel(f,data, family(), link(), wts=wts)
+    m = GeneralizedLinearMixedModel(f,columntable(data), family(), link(), wts=wts)
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     θ = rcopyarray(s[:theta])
     β = rcopyarray(s[:beta])
