@@ -5,6 +5,20 @@ import RCall: rcopy,
               reval,
               @R_str
 
+_guarantee_array(val::AbstractArray) = val
+_guarantee_array(val) = [val]
+
+
+"""
+    rcopyarray(robj)
+    
+Copy an object from R, guaranteeing that it is an array.
+
+This is useful to undo RCall's automatic conversion of size 1 arrays to scalars.
+"""
+rcopyarray(robj) = _guarantee_array(rcopy(robj))
+
+
 """
     get the contrasts from an R dataframe
 """
