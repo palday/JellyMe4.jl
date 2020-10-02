@@ -133,20 +133,42 @@ const GLMM = GeneralizedLinearMixedModel
             @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
         end
         
-                
-        @testset "zerocorr" begin
+
+        @testset "fulldummy" begin
             machines = rcopy(R"as.data.frame(nlme::Machines)")
-            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + zerocorr(1+Machine|Worker)), machines)
+            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1 + fulldummy(Machine)|Worker)), machines)
+            rlmm = R"lmer(score ~ 1 +  Machine + (1 + dummy(Machine, levels(Machine))|Worker), machines)"
+            rlmmrepca = rcopy(R"summary(rePCA($rlmm))$Worker$importance[3,]")
+            @test  rlmmrepca ≈ only(jlmm.rePCA) atol=0.05
+        end
+                
+        @testset "zerocorr" begin    
+            jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days|Subject)),sleepstudy), REML=false)
+            rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1 + Days||Subject),sleepstudy,REML=FALSE)")
+
+            @test jlmm.θ ≈ rlmm.θ atol=0.001
+            @test objective(jlmm) ≈ objective(rlmm) atol=0.001
+            @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+
+            jlmm = fit!(jlmm, REML=true)
+            rlmm = rcopy(R"update(m, REML=TRUE)")
+
+            @test jlmm.θ ≈ rlmm.θ atol=0.001
+            @test objective(jlmm) ≈ objective(rlmm) atol=0.001
+            @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+            # TODO: test fulldummy within a zerocorr when zerocorr is better supported
+
+            # machines = rcopy(R"as.data.frame(nlme::Machines)")
+            # jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + zerocorr(1+Machine|Worker)), machines)
             
             
-            rlmm = rcopy(R"mach")
-            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
-            # as a cheat for comparing the covariance matrices, we use packages
-            @test first(rlmm.rePCA) ≈ first(jlmm.rePCA) atol=1e-3           
+            # rlmm = rcopy(R"mach")
+            # jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
+            # # as a cheat for comparing the covariance matrices, we use packages
+            # @test first(rlmm.rePCA) ≈ first(jlmm.rePCA) atol=1e-3           
         end
         
-        @testset "fulldummy" begin
-            # TODO
-        end
+        
+
     end
 end
