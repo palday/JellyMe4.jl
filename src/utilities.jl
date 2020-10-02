@@ -5,6 +5,20 @@ import RCall: rcopy,
               reval,
               @R_str
 
+_guarantee_array(val::AbstractArray) = val
+_guarantee_array(val) = [val]
+
+
+"""
+    rcopyarray(robj)
+    
+Copy an object from R, guaranteeing that it is an array.
+
+This is useful to undo RCall's automatic conversion of size 1 arrays to scalars.
+"""
+rcopyarray(robj) = _guarantee_array(rcopy(robj))
+
+
 """
     get the contrasts from an R dataframe
 """
@@ -13,7 +27,7 @@ function get_r_contrasts(rdf)
     # get categorical columns
     cnames = [c for c in propertynames(data)  if typeof(data[!, c]) <: CategoricalArray]
     Dict(c => HypothesisCoding(pinv(rcopy(R"contrasts($(rdf[c]))")),
-                               labels=rcopy(R"colnames(contrasts($(rdf[c])))")) for c in cnames)
+                               labels=rcopyarray(R"colnames(contrasts($(rdf[c])))")) for c in cnames)
 end
 
 """

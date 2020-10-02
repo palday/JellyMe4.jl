@@ -30,7 +30,7 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         @error "weights are not supported"
     catch err
         if !isa(err, BoundsError) # this is the error we were expecting
-            throw(err)
+            rethrow(err)
         end
         # no weights defined, we continue on our way
     end
@@ -40,7 +40,7 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         @error "Contrasts must be specified in the dataframe, not the lmer() call"
     catch err
         if !isa(err, BoundsError) # this is the error we were expecting
-            throw(err)
+            rethrow(err)
         end
         # no extra contrasts defined, we continue on our way
     end
@@ -49,23 +49,14 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     data = rcopy(s[:frame])
     contrasts = get_r_contrasts(s[:frame])
 
-    θ = rcopy(s[:theta])
+    θ = rcopyarray(s[:theta])
     reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
 
     m = LinearMixedModel(f, data, contrasts=contrasts)
     m.optsum.REML = reml
     m.optsum.feval = rcopy(s[:optinfo][:feval])
-    try
-        m.optsum.final = rcopy(s[:optinfo][:val])
-    catch err
-        if isa(err, MethodError)
-            # this happens if θ has length one, i.e. a single scalar RE
-            m.optsum.final = [rcopy(s[:optinfo][:val])]
-            θ = [θ]
-        else
-            throw(err)
-        end
-    end
+    # I'm wondering if this be filled in from the Julia side
+    m.optsum.final = rcopyarray(s[:optinfo][:val])
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
     m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
     m.optsum.fmin = reml ? rcopy(s[:devcomp][:cmp][:REML]) : rcopy(s[:devcomp][:cmp][:dev])
