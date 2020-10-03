@@ -31,7 +31,7 @@ addons:
   apt:
     sources:
       - sourceline: 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran40/'
-      - key_url: 'http://keyserver.ubuntu.com:11371/pks/lookup?op=get&search=0xe298a3a825c0d65dfd57cbb651716619e084dab9'
+        key_url: 'http://keyserver.ubuntu.com:11371/pks/lookup?op=get&search=0xe298a3a825c0d65dfd57cbb651716619e084dab9'
     packages:
       - libudunits2-dev
       - libv8-dev
