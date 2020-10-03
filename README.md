@@ -181,7 +181,11 @@ MachineC -0.374  0.301
 
 This is alpha software. It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. The testuite only tests against a single version of R and the current version of lme4. In other words, even for the parts that do work for me, they may not work for you.
 
-Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer.
+Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer. 
+This package generally follows the Julia community standard [SemVer](https://semver.org/).
+As this package has not yet hit 1.0, we follow these general conventions: 
+  - Non-exported functions may change or disappear even with a patch release. Exported functions should otherwise only increase in functionality between patch versions; supporting additional syntax is not considered a breaking change. In other words, errors and exceptions disappearing as more conversions are supported is not breaking. Small improvements will be accompanied by a patch version bump. 
+  - Large improvements and potentially breaking changes will be accompanied by a minor version bump.
 
 Only a subset of all the options available in `MixedModels` and `lme4` are supported. Unsupported things should break in an obvious way, but here's a list of things that are more commonly used but may break non obviously:
 - ~~**custom contrast coding**. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.~~ This should work if you're not doing anything weird with your interaction terms.
