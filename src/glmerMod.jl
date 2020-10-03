@@ -168,10 +168,6 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     #     @error "weights are not currently supported"
     # end
 
-
-    # should we assume the user is smart enough?
-    reval("library(lme4)")
-
     jellyme4_data = tbl
     if urfamily == "Bernoulli"
         lhs = m.formula.lhs
@@ -195,6 +191,8 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     rsteps = 1;
 
     betastart = nAGQ > 0 ? "fixef=jellyme4_beta, " : ""
+    
+    GLMER = LMER in ("afex::lmer_alt", "lmer_alt") ? LMER : "lme4::glmer"
 
     @rput jellyme4_data
     @rput jellyme4_theta
@@ -204,7 +202,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     set_r_contrasts!("jellyme4_data", m.formula)
 
     r = """
-        jellyme4_mod <- glmer(formula = $(formula),
+        jellyme4_mod <- $(GLMER)(formula = $(formula),
                                data=jellyme4_data,
                                family=$family(link="$link"),
                                nAGQ=$(nAGQ),

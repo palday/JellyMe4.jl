@@ -1,7 +1,10 @@
 using RCall, MixedModels, Test
 using StatsBase: zscore
-import StatsModels: SeqDiffCoding
+using StatsModels: SeqDiffCoding
 using Tables: columntable
+
+import JellyMe4: _set_lmer, _set_afex_installed
+
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
 
@@ -13,7 +16,8 @@ const GLMM = GeneralizedLinearMixedModel
         lib <- .libPaths()[1L]
         install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
         library(lme4)
-    }""")
+    }
+    """)
 
     # this is available in MixedModels.dataset(:sleepstudy) but with different
     # capitalization than in R
@@ -72,6 +76,8 @@ const GLMM = GeneralizedLinearMixedModel
             """)
             machines = rcopy(R"machines")
             rlmm = rcopy(R"mach")
+            # note that is the lme4 definition of double || -- it really is just a convenience wrapper for
+            # splitting terms up this way!
             jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
             # as a cheat for comparing the covariance matrices, we use packages
             @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05          
@@ -137,38 +143,70 @@ const GLMM = GeneralizedLinearMixedModel
         @testset "fulldummy" begin
             machines = rcopy(R"as.data.frame(nlme::Machines)")
             jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1 + fulldummy(Machine)|Worker)), machines)
-            rlmm = R"lmer(score ~ 1 +  Machine + (1 + dummy(Machine, levels(Machine))|Worker), machines)"
-            rlmmrepca = rcopy(R"summary(rePCA($rlmm))$Worker$importance[3,]")
+            rlmm = (jlmm, machines)
+            @rput rlmm
+            rlmmrepca = rcopy(R"summary(rePCA(rlmm))$Worker$importance[3,]")
             @test  rlmmrepca ≈ only(jlmm.rePCA) atol=0.05
         end
                 
-        @testset "zerocorr" begin    
-            jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days|Subject)),sleepstudy), REML=false)
-            rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1 + Days||Subject),sleepstudy,REML=FALSE)")
-
-            @test jlmm.θ ≈ rlmm.θ atol=0.001
-            @test objective(jlmm) ≈ objective(rlmm) atol=0.001
-            @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
-
-            jlmm = fit!(jlmm, REML=true)
-            rlmm = rcopy(R"update(m, REML=TRUE)")
-
-            @test jlmm.θ ≈ rlmm.θ atol=0.001
-            @test objective(jlmm) ≈ objective(rlmm) atol=0.001
-            @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+        @testset "zerocorr" begin            
             # TODO: test fulldummy within a zerocorr when zerocorr is better supported
 
-            # machines = rcopy(R"as.data.frame(nlme::Machines)")
-            # jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + zerocorr(1+Machine|Worker)), machines)
+        
+            @testset "lme4" begin
+                _set_lmer("lme4::lmer")
+                _set_afex_installed(false)
+                
+                jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days|Subject)),sleepstudy), REML=false)
+                rlmm = (jlmm, sleepstudy)
+                @rput rlmm
+                @test rcopy(R"""!is(rlmm,"merModLmerTest")""")
+                @test only(ranef(jlmm))' ≈ Matrix(rcopy(R"ranef(rlmm)$Subject"))
+                @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
+                @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
+            end
             
             
-            # rlmm = rcopy(R"mach")
-            # jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
-            # # as a cheat for comparing the covariance matrices, we use packages
-            # @test first(rlmm.rePCA) ≈ first(jlmm.rePCA) atol=1e-3           
-        end
-        
-        
+            @testset "afex" begin
+                reval("""
+                if(!require(afex)){
+                    .libPaths("/tmp")
+                    lib <- .libPaths()[1L]
+                    install.packages("afex",repos="https://cloud.r-project.org", libs=lib)
+                }
+                """)
+                
+                machines = rcopy(R"as.data.frame(nlme::Machines)")
+                
+                jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + zerocorr(0+Machine|Worker)), machines)
 
+                @testset "afex pre-enabled" begin
+                    _set_lmer("afex::lmer_alt")
+                    rlmm = (jlmm, machines)
+                    @rput rlmm
+                    @test only(ranef(jlmm))' ≈ Matrix(rcopy(R"ranef(rlmm)$Worker"))
+                    @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
+                    @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
+                end
+                
+                @testset "afex auto-enabled" begin
+                    _set_lmer("lme4::lmer")
+                    _set_afex_installed(true)
+                    rlmm = (jlmm, machines)
+                    @test_logs (:info, r"afex::lmer_alt") @rput rlmm
+                    @test only(ranef(jlmm))' ≈ Matrix(rcopy(R"ranef(rlmm)$Worker"))
+                    @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
+                    @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
+                end
+                
+                @testset "afex unavailable" begin
+                    _set_lmer("lme4::lmer")
+                    _set_afex_installed(false)
+                    rlmm = (jlmm, machines)
+                    @test_throws ArgumentError @rput rlmm
+                end
+            end           
+
+        end
     end
 end
