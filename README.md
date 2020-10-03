@@ -7,19 +7,17 @@
 
 <!-- [![Build Status](https://ci.appveyor.com/api/projects/status/github/palday/JellyMe4.jl?svg=true)](https://ci.appveyor.com/project/palday/JellyMe4-jl) -->
 
-- [JellyMe4](#jellyme4)
-  * [Purpose](#purpose)
-  * [Installation](#installation)
-  * [Basic Usage](#basic-usage)
-    + [Fitting a model in R and moving it to Julia:](#fitting-a-model-in-r-and-moving-it-to-julia-)
-    + [Fitting a model in Julia and moving it to R](#fitting-a-model-in-julia-and-moving-it-to-r)
-  * [Limitations and warnings](#limitations-and-warnings)
-  * [Alternative `lmer`](#alternative--lmer-)
-    + [Julia to R](#julia-to-r)
-    + [R to Julia](#r-to-julia)
-  * [Where does the name come from?](#where-does-the-name-come-from-)
-  * [Acknowledgements](#acknowledgements)
-
+* [Purpose](#purpose)
+* [Installation](#installation)
+* [Basic Usage](#basic-usage)
+  + [Fitting a model in R and moving it to Julia](#fitting-a-model-in-r-and-moving-it-to-julia)
+  + [Fitting a model in Julia and moving it to R](#fitting-a-model-in-julia-and-moving-it-to-r)
+* [Limitations and warnings](#limitations-and-warnings)
+* [Alternative `lmer`](#alternative-lmer)
+  + [Julia to R](#julia-to-r)
+  + [R to Julia](#r-to-julia)
+* [Where does the name come from?](#where-does-the-name-come-from)
+* [Acknowledgements](#acknowledgements)
 
 
 ## Purpose
@@ -47,7 +45,7 @@ Generally speaking, the development version should work, but especially until ve
 
 ## Basic Usage
 
-### Fitting a model in R and moving it to Julia:
+### Fitting a model in R and moving it to Julia
 
 ```julia
 julia> using MixedModels, RCall, JellyMe4
