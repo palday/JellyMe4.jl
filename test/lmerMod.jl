@@ -172,7 +172,7 @@ const GLMM = GeneralizedLinearMixedModel
                 if(!require(afex)){
                     .libPaths("/tmp")
                     lib <- .libPaths()[1L]
-                    install.packages("afex",repos="https://cloud.r-project.org", libs=lib)
+                    install.packages("afex",repos="https://cloud.r-project.org", libs=lib,type="source")
                 }
                 """)
                 
