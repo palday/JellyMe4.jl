@@ -18,8 +18,8 @@ export sexpclass
 function __init__()
     # should we assume the user is smart enough?
     # reval("library(lme4)")
-    if !rcopy(R""" "afex" %in% installed.packages() """)
-        error("lme4 must be installed, otherwise what's the point?")
+    if !rcopy(R""" "lme4" %in% installed.packages() """)
+        @error "lme4 not found" 
     end
 
     global LMER = get(ENV, "LMER", "lme4::lmer")
