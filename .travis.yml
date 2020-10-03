@@ -3,6 +3,8 @@ language: julia
 os:
   # no longer testing on Linux 
   # I run those tests locally and getting the config to work is too finicky.
+  # the older lme4 versions do worse in optimization (so tolerance break) and 
+  # don't have rePCA
   # - linux
   - osx
 julia:
