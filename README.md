@@ -202,7 +202,34 @@ Only a subset of all the options available in `MixedModels` and `lme4` are suppo
 
 Finally, to work its magic, this package hooks into `MixedModels` and `lme4` internals. `lme4`'s internals are quite stable now and this is taken advantage of by several other R packages (`ordinal`, `gamm4`, `robustlmm`). `MixedModels` are also fairly stable for the core things, but not everything. I am a contributor to `MixedModels`, so I generally know when something is going to change, but things may still break with changing `MixedModels` versions, especially for major version changes.
 
-Models fit with the R package [`afex`](https://cran.r-project.org/web/packages/afex/) should also largely be compatible, as `afex` works by providing a more convenient interface to `lme4`. Note however that if any of `afex`'s behind the scenes rewrite-rules invoke features not yet supported, then the resulting models will not work with JellyMe4. Please check your model summary on both sides to make sure they line up!
+## Alternative `lmer`
+
+### Julia to R
+By default, JellyMe4 uses `[g]lmer` from `lme4`, as this is the closest equivalent to `MixedModels` (and was in no small part written by the same individual). It is, however, possible to set a different `lmer` implementation. Notably, the `afex` and `lmerTest` packages extend `lmer` in ways that are often appealing. If you set the Julia environment variable `ENV["LMER"]` before loading JellyMe4, then JellyMe4 will use the alternative specification. For example:
+```julia
+# note the use of R's package::function syntax
+julia> ENV["LMER"] = "lmerTest::lmer" # if you really need Satterthwaite or Kenward-Roger ddf
+julia> ENV["LMER"] = "afex::lmer_alt" # for better handling of the || syntax
+julia> using RCall, JellyMe4
+``` 
+There is currently no public API for changing this after loading the package. For `lmerTest`, it is possible to modify the resultant `lme4::lmerMod` object to be an `lmerTest::merModLmerTest` after the fact: 
+It is also possible to do this conversion after the fact :
+```R
+R> mod = as(mod, "merModLmerTest")
+```
+(Note that this conversion is only possible the LMM case. For GLMM, the degrees of freedom are not an issue.)
+If `afex` is installed and you attempt to convert a `zerocorr` model with a categorical variable with many levels, then JellyMe4 will swap itself to use `afex::lmer_alt` for the correct handling of these. If `afex` is not installed, then JellyMe4 can still convert two-level factors and continuous variables using the machinery built into `lme4`, but will error for multi-level factors. Once JellyMe4 has swapped to using `afex::lmer_alt`, it will continue doing so for the remainder of the session, but it will only swap when it first encounters a multi-level factor.
+
+### R to Julia
+
+Models fit with the R package [`lmerTest`](https://cran.r-project.org/web/packages/lmerTest/) should work without difficulty as `lmerTest` does not modify the fitting process nor the relevant internal structure of the model of `lme4`. 
+Note that the functionality related to denominator degrees of freedom (e.g. Satterthwaite or Kenward-Roger approximations) are not currently implemented in `MixedModels` and thus this functionality will be lost.
+
+Models fit with the R package [`afex`](https://cran.r-project.org/web/packages/afex/) should also largely be compatible, as `afex` works by providing a more convenient interface to `lme4`. 
+Note however that if any of `afex`'s behind the scenes rewrite-rules invoke features not yet supported, then the resulting models will not work with JellyMe4. 
+In particular, `afex` directly modifies the model matrix to fix the limitation in the `||` syntax and this will almost definitely not work in JellyMe4. 
+This could probably be made to work, but it seems needlessly complicated given that the assumption is that most models are easier to fit with `MixedModels` than `lme4` and that the package is primarily for moving models from Julia to R.
+In any case, please check your model summary on both sides to make sure they line up!
 
 ## Where does the name come from?
 
