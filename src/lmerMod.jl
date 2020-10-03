@@ -45,7 +45,9 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         # no extra contrasts defined, we continue on our way
     end
 
-    f = rcopy(s[:call][:formula])
+    # for some reason this doesn't always give a formula with lmerTest
+    #f = rcopy(s[:call][:formula])
+    f = rcopy(R"as.formula($(s)@call$formula)")
     data = rcopy(s[:frame])
     contrasts = get_r_contrasts(s[:frame])
 
@@ -64,6 +66,9 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
 end
 
 rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
+
+# add lmerTest::lmer and afex::lmer_alt support
+rcopytype(::Type{RClass{:lmerModLmerTest}}, s::Ptr{S4Sxp}) = LinearMixedModel
 
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
@@ -115,7 +120,8 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     r
 end
 
-sexpclass(x::Tuple{LinearMixedModel{T}, DataFrame}) where T = RClass{:lmerMod}
+sexpclass(x::Tuple{LinearMixedModel{T}, DataFrame}) where T = LMER in ("afex::lmer_alt", "lmer_alt") ? RClass{:lmerModLmerTest} : RClass{:lmerMod}
+sexp(::Type{RClass{:lmerModLmerTest}}, x::Tuple{LinearMixedModel{T}, DataFrame}) where T = sexp(RClass{:lmerMod}, x)
 
 # generalize to ColumnTable, which is what MixedModels actually requires
 function sexp(ss::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, ColumnTable}) where T

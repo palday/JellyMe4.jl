@@ -30,8 +30,9 @@ const GLMM = GeneralizedLinearMixedModel
 
     @testset "get lmerMod" begin
         ### from R ###
+        
         jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy), REML=false)
-        rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
+        rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
 
         @test jlmm.θ ≈ rlmm.θ atol=0.001
         @test objective(jlmm) ≈ objective(rlmm) atol=0.001
@@ -43,6 +44,22 @@ const GLMM = GeneralizedLinearMixedModel
         @test jlmm.θ ≈ rlmm.θ atol=0.001
         @test objective(jlmm) ≈ objective(rlmm) atol=0.001
         @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+        
+        @testset "merModLmerTest" begin
+            jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy), REML=false)
+            rlmm = rcopy(R"m <- lmerTest::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
+
+            @test jlmm.θ ≈ rlmm.θ atol=0.001
+            @test objective(jlmm) ≈ objective(rlmm) atol=0.001
+            @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+
+            jlmm = fit!(jlmm, REML=true)
+            rlmm = rcopy(R"update(m, REML=TRUE)")
+
+            @test jlmm.θ ≈ rlmm.θ atol=0.001
+            @test objective(jlmm) ≈ objective(rlmm) atol=0.001
+            @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+        end
 
         # single scalar RE is different because RCall converts the single-entry θ
         # to a scalar value, which we have to correct
@@ -50,7 +67,7 @@ const GLMM = GeneralizedLinearMixedModel
         # the scalar-vector distinction for θ is missing in R
         @testset "scalar RE" begin
             jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1|Subject)),sleepstudy), REML=false)
-            rlmm = rcopy(R"m <- lmer(Reaction ~ 1 + Days + (1|Subject),sleepstudy,REML=FALSE)")
+            rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1|Subject),sleepstudy,REML=FALSE)")
 
             @test jlmm.θ ≈ rlmm.θ atol=0.001
             @test objective(jlmm) ≈ objective(rlmm) atol=0.001
@@ -62,9 +79,9 @@ const GLMM = GeneralizedLinearMixedModel
             data(cake)
             cake\$rr <- with(cake, replicate:recipe)
             """);
-            rlmm = rcopy(R"fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
+            rlmm = rcopy(R"fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
             @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
-            # rlmm = rcopy(R"""fm1 <- lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
+            # rlmm = rcopy(R"""fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
             #                              contrasts=list(temperature=contr.helmert))""");
             # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
         end
@@ -77,7 +94,7 @@ const GLMM = GeneralizedLinearMixedModel
             
             reval("""
             machines <- as.data.frame(nlme::Machines)
-            mach <- lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
+            mach <- lme4::lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
             """)
             machines = rcopy(R"machines")
             rlmm = rcopy(R"mach")
@@ -118,7 +135,7 @@ const GLMM = GeneralizedLinearMixedModel
         @testset "transformations" begin
             sleepstudy[!,:Days2] = sleepstudy.Days .+ 1
             @rput sleepstudy;
-            R"m <- lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
+            R"m <- lme4::lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
             jlmm = fit!(LMM(@formula(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject)),sleepstudy), REML=false)
             jm = (jlmm, sleepstudy)
             @rput jm;
