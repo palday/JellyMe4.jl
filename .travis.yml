@@ -1,11 +1,14 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
 os:
-  - linux
+  # no longer testing on Linux 
+  # I run those tests locally and getting the config to work is too finicky.
+  # - linux
   - osx
 julia:
   - 1.4
- # - 1.5
+  - 1.5
+  - nightly
 branches:
   only:
     - master
@@ -19,7 +22,7 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
   # install lme4 via apt to avoid compiling it
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-cran-lme4 r-cran-afex -y; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-cran-lme4 r-cran-afex r-cran-lmertest -y; fi
 
   # osx
   # faster than using homebrew/science tap
