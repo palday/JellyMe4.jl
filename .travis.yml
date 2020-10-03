@@ -30,7 +30,7 @@ addons:
   # this was adapted from afex's own tests and reading the Travis docs
   apt:
     sources:
-      - sourceline: 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/'
+      - sourceline: 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran/'
         key_url: 'http://keyserver.ubuntu.com:11371/pks/lookup?op=get&search=0xe298a3a825c0d65dfd57cbb651716619e084dab9'
     packages:
       - libudunits2-dev
@@ -39,7 +39,7 @@ addons:
       - libgdal-dev
       - libproj-dev
       - git 
-      - r-base 
+      - r-base
       - r-base-dev 
       - r-recommended 
       - r-cran-lme4
