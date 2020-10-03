@@ -7,6 +7,21 @@
 
 <!-- [![Build Status](https://ci.appveyor.com/api/projects/status/github/palday/JellyMe4.jl?svg=true)](https://ci.appveyor.com/project/palday/JellyMe4-jl) -->
 
+- [JellyMe4](#jellyme4)
+  * [Purpose](#purpose)
+  * [Installation](#installation)
+  * [Basic Usage](#basic-usage)
+    + [Fitting a model in R and moving it to Julia:](#fitting-a-model-in-r-and-moving-it-to-julia-)
+    + [Fitting a model in Julia and moving it to R](#fitting-a-model-in-julia-and-moving-it-to-r)
+  * [Limitations and warnings](#limitations-and-warnings)
+  * [Alternative `lmer`](#alternative--lmer-)
+    + [Julia to R](#julia-to-r)
+    + [R to Julia](#r-to-julia)
+  * [Where does the name come from?](#where-does-the-name-come-from-)
+  * [Acknowledgements](#acknowledgements)
+
+
+
 ## Purpose
 One of the difficulties in transitioning to a new programming language is not just learning how to do things in the new language, but the difference in the package ecosystem. `RCall` helps with both aspects when moving from R to Julia, at least when it comes to basic data manipulation. `JellyMe4` takes advantage of `RCall`'s extensibility to provide a way to transfer mixed-effects models fit between R's `lme4` and Julia's `MixedEffectsModels`. This means that it is now possible to fit a model in Julia, but then take advantage of existing R packages for examing the model such as `car` and `effects`.
 
@@ -189,7 +204,7 @@ As this package has not yet hit 1.0, we follow these general conventions:
 
 Only a subset of all the options available in `MixedModels` and `lme4` are supported. Unsupported things should break in an obvious way, but here's a list of things that are more commonly used but may break non obviously:
 - ~~**custom contrast coding**. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.~~ This should work if you're not doing anything weird with your interaction terms.
-- **advanced models in either language** ~(e.g., `zerocorr!`, `fulldummy` in Julia or `||` in R, which are not completely synonymous anyway).~ `fulldummy` in Julia and `||` in R should work. `zerocorr` will work for continuous variables and factors with two levels, but won't work with factors with more than two levels. There's not really a trivial way to deal with this at the moment, sorry. Posthoc `zerocorr!` is not detected. Use `zerocorr` in your formula instead.
+- ~~**advanced models in either language** (e.g., `zerocorr!`, `fulldummy` in Julia or `||` in R, which are not completely synonymous anyway).~~ This should largely work, but there are a few edge cases, especially when combining these, that might not work. `dummy` in R will not be translated -- create your indicator variables ahead of time and not as part of the formula.  `zerocorr` will work with continuous variables and categorical variables with two levels using `lme4` on the R side. Categorical variables with more than two levels require the R package [`afex`](https://cran.r-project.org/web/packages/afex) to be installed for `zerocorr` to be translated correctly. See [Alternative lmer](#alternative--lmer-) below.  Posthoc `zerocorr!` is not detected. Use `zerocorr` in your formula instead.
 - **fancy transformations within model formulae**, especially those that have different names (e.g. `scale()` in R). If in doubt, pre-transform your data in the dataframe before fitting. A few transformations are supported (e.g. `log`, `exp`) and you should receive an error for unsupported transformations, but it's always a good idea to compare the estimates of the original and copied models.
 - **missing data** is handled differently in R and Julia, both in its representation and when it's eliminated. If in doubt, remove missing data before fitting models for consistency.
 - **interactions specified in R with `^`**. This part of the parsing is handled by RCall and winds up getting translated into simple exponentiation instead of "interactions below a certain order".  Consider using the [`simplify.formula`](https://www.rdocumentation.org/packages/MuMIn/versions/1.9.5/topics/Formula%20manipulation) function from the [`MuMIn` package](https://cran.r-project.org/web/packages/MuMIn/index.html) in R to simplify your formula to primitive operations before calling lme4.
