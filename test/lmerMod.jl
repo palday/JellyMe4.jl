@@ -17,6 +17,11 @@ const GLMM = GeneralizedLinearMixedModel
         install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
         library(lme4)
     }
+    if(!require(afex)){
+        .libPaths("/tmp")
+        lib <- .libPaths()[1L]
+        install.packages("afex",repos="https://cloud.r-project.org", libs=lib)
+    }
     """)
 
     # this is available in MixedModels.dataset(:sleepstudy) but with different
@@ -168,14 +173,7 @@ const GLMM = GeneralizedLinearMixedModel
             
             
             @testset "afex" begin
-                reval("""
-                if(!require(afex)){
-                    .libPaths("/tmp")
-                    lib <- .libPaths()[1L]
-                    install.packages("afex",repos="https://cloud.r-project.org", libs=lib,type="source")
-                }
-                """)
-                
+               
                 machines = rcopy(R"as.data.frame(nlme::Machines)")
                 
                 jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + zerocorr(0+Machine|Worker)), machines)

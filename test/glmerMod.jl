@@ -15,7 +15,13 @@ logistic(x)  = 1 / (1 + exp(-x))
         lib <- .libPaths()[1L]
         install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
         library(lme4)
-    }""")
+    }
+    if(!require(afex)){
+        .libPaths("/tmp")
+        lib <- .libPaths()[1L]
+        install.packages("afex",repos="https://cloud.r-project.org", libs=lib)
+    }
+    """)
 
     ### from R ###
     @testset "get glmerMod" begin

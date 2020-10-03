@@ -16,7 +16,13 @@ const GLMM = GeneralizedLinearMixedModel
         # and there are binary builds for Mac and Windows
         install.packages("lme4",repos="https://cloud.r-project.org", libs=lib, type="binary")
         library(lme4)
-    }""")
+    }
+    if(!require(afex)){
+        .libPaths("/tmp")
+        lib <- .libPaths()[1L]
+        install.packages("afex",repos="https://cloud.r-project.org", libs=lib, , type="binary")
+    }
+    """)
 
     # this is available in MixedModels.dataset(:sleepstudy) but with different
     # capitalization than in R
