@@ -45,7 +45,9 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         # no extra contrasts defined, we continue on our way
     end
 
-    f = rcopy(s[:call][:formula])
+    # for some reason this doesn't always give a formula with lmerTest
+    #f = rcopy(s[:call][:formula])
+    f = rcopy(R"as.formula($(s)@call$formula)")
     data = rcopy(s[:frame])
     contrasts = get_r_contrasts(s[:frame])
 
@@ -65,6 +67,9 @@ end
 
 rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
 
+# add lmerTest::lmer and afex::lmer_alt support
+rcopytype(::Type{RClass{:lmerModLmerTest}}, s::Ptr{S4Sxp}) = LinearMixedModel
+
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
 #          SET_VECTOR_ELT() can only be applied to a 'list', not a 'character'
@@ -75,9 +80,6 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     end
 
     m.optsum.feval > 0 || throw(ArgumentError("Model must be fitted"))
-
-    # should we assume the user is smart enough?
-    reval("library(lme4)")
 
     jellyme4_data = tbl
     formula = convert_julia_to_r(m.formula)
@@ -99,7 +101,7 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     set_r_contrasts!("jellyme4_data", m.formula)
 
     r = """
-    jellyme4_mod <- lmer(formula = $(formula),
+    jellyme4_mod <- $LMER(formula = $(formula),
                            data=jellyme4_data,
                            REML=$(REML),
                            control=lmerControl(optimizer="nloptwrap",
@@ -112,14 +114,14 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
      jellyme4_mod@optinfo\$optimizer <- "$(optimizer)"
      jellyme4_mod
     """
-    @debug r
     r = reval(r)
     r = protect(sexp(r))
     unprotect(1)
     r
 end
 
-sexpclass(x::Tuple{LinearMixedModel{T}, DataFrame}) where T = RClass{:lmerMod}
+sexpclass(x::Tuple{LinearMixedModel{T}, DataFrame}) where T = LMER in ("afex::lmer_alt", "lmer_alt") ? RClass{:lmerModLmerTest} : RClass{:lmerMod}
+sexp(::Type{RClass{:lmerModLmerTest}}, x::Tuple{LinearMixedModel{T}, DataFrame}) where T = sexp(RClass{:lmerMod}, x)
 
 # generalize to ColumnTable, which is what MixedModels actually requires
 function sexp(ss::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, ColumnTable}) where T

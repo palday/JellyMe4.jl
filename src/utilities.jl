@@ -20,19 +20,21 @@ rcopyarray(robj) = _guarantee_array(rcopy(robj))
 
 
 """
-    get the contrasts from an R dataframe
+get the contrasts from an R dataframe
 """
 function get_r_contrasts(rdf)
     data = rcopy(rdf)
     # get categorical columns
     cnames = [c for c in propertynames(data)  if typeof(data[!, c]) <: CategoricalArray]
     Dict(c => HypothesisCoding(pinv(rcopy(R"contrasts($(rdf[c]))")),
-                               labels=rcopyarray(R"colnames(contrasts($(rdf[c])))")) for c in cnames)
+                               labels=rcopyarray( R"colnames(contrasts($(rdf[c])))" ) 
+                               )
+         for c in cnames)
 end
 
 """
-    set the contrasts on an R dataframe
-    this of course has a side effect: it changes the R dataframe
+set the contrasts on an R dataframe
+this of course has a side effect: it changes the R dataframe
 """
 
 function set_r_contrasts!(rdfname, formula)
