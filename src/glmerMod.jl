@@ -51,7 +51,7 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     # but that will involve more R black magic
     data = rcopy(R"eval($(s[:call][:data]))")
     # end
-    
+
     try
         contrasts = rcopy(s[:call][:contrasts])
         @error "Contrasts must be specified in the dataframe, not the glmer() call"
@@ -61,9 +61,9 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
         end
         # no extra contrasts defined, we continue on our way
     end
-    
+
     contrasts = get_r_contrasts(s[:frame])
-    
+
     wts = []
     try
         wts = rcopy(s[:call][:weights])
@@ -116,6 +116,13 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     θ = rcopyarray(s[:theta])
     β = rcopyarray(s[:beta])
+
+    if length(θ) != length(m.θ)
+        @error """You're probably using || in R with a categorical variable,
+                  whose translation is currently unsupported with MixedModels 3.0."""
+        throw(ArgumentError("Parameter vectors in R and Julia are different sizes."))
+    end
+
     m.optsum.final = fast ? θ : [β; θ]
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
     m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
@@ -191,7 +198,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     rsteps = 1;
 
     betastart = nAGQ > 0 ? "fixef=jellyme4_beta, " : ""
-    
+
     GLMER = LMER in ("afex::lmer_alt", "lmer_alt") ? LMER : "lme4::glmer"
 
     @rput jellyme4_data
