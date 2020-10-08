@@ -21,7 +21,7 @@
 
 
 ## Purpose
-One of the difficulties in transitioning to a new programming language is not just learning how to do things in the new language, but the difference in the package ecosystem. `RCall` helps with both aspects when moving from R to Julia, at least when it comes to basic data manipulation. `JellyMe4` takes advantage of `RCall`'s extensibility to provide a way to transfer mixed-effects models fit between R's `lme4` and Julia's `MixedEffectsModels`. This means that it is now possible to fit a model in Julia, but then take advantage of existing R packages for examing the model such as `car` and `effects`.
+One of the difficulties in transitioning to a new programming language is not just learning how to do things in the new language, but the difference in the package ecosystem. `RCall` helps with both aspects when moving from R to Julia, at least when it comes to basic data manipulation. `JellyMe4` takes advantage of `RCall`'s extensibility to provide a way to transfer mixed-effects models fit between R's `lme4` and Julia's `MixedModels`. This means that it is now possible to fit a model in Julia, but then take advantage of existing R packages for examining the model such as `car` and `effects`.
 
 ## Installation
 
@@ -53,8 +53,8 @@ julia> R"library(lme4)"
 ┌ Warning: RCall.jl: Loading required package: Matrix
 └ @ RCall ~/.julia/packages/RCall/g7dhB/src/io.jl:113
 RObject{StrSxp}
-[1] "lme4"      "Matrix"    "stats"     "graphics"  "grDevices" "utils"    
-[7] "datasets"  "methods"   "base"     
+[1] "lme4"      "Matrix"    "stats"     "graphics"  "grDevices" "utils"
+[7] "datasets"  "methods"   "base"
 
 julia> R"summary(m <- lmer(Reaction ~ 1 + Days + (1+Days|Subject),sleepstudy,REML=FALSE))"
 RObject{VecSxp}
@@ -71,9 +71,9 @@ Scaled residuals:
 
 Random effects:
  Groups   Name        Variance Std.Dev. Corr
- Subject  (Intercept) 565.48   23.780       
+ Subject  (Intercept) 565.48   23.780
           Days         32.68    5.717   0.08
- Residual             654.95   25.592       
+ Residual             654.95   25.592
 Number of obs: 180, groups:  Subject, 18
 
 Fixed effects:
@@ -89,7 +89,7 @@ Days -0.138
 julia> @rget m
 Linear mixed model fit by maximum likelihood
  Reaction ~ 1 + Days + (1 + Days | Subject)
-   logLik   -2 logLik     AIC        BIC    
+   logLik   -2 logLik     AIC        BIC
  -875.96967 1751.93934 1763.93934 1783.09709
 
 Variance components:
@@ -136,7 +136,7 @@ julia> machines = rcopy(R"nlme::Machines")
 julia> m = fit(MixedModel, @formula(score ~ 1 + Machine + (1 + Machine|Worker)), machines)
 Linear mixed model fit by maximum likelihood
  score ~ 1 + Machine + (1 + Machine | Worker)
-   logLik    -2 logLik      AIC         BIC     
+   logLik    -2 logLik      AIC         BIC
  -108.208914  216.417828  236.417828  256.307668
 
 Variance components:
@@ -171,11 +171,11 @@ Scaled residuals:
 -2.40773 -0.51890  0.03227  0.45598  2.54091
 
 Random effects:
- Groups   Name        Variance Std.Dev. Corr       
- Worker   (Intercept) 13.8176  3.7172              
-          MachineB    28.6850  5.3558    0.49      
+ Groups   Name        Variance Std.Dev. Corr
+ Worker   (Intercept) 13.8176  3.7172
+          MachineB    28.6850  5.3558    0.49
           MachineC    11.2410  3.3528   -0.36  0.30
- Residual              0.9246  0.9616              
+ Residual              0.9246  0.9616
 Number of obs: 54, groups:  Worker, 6
 
 Fixed effects:
@@ -186,7 +186,7 @@ MachineC      13.917      1.406   9.900
 
 Correlation of Fixed Effects:
          (Intr) MachnB
-MachineB  0.463       
+MachineB  0.463
 MachineC -0.374  0.301
 ```
 
@@ -194,22 +194,22 @@ MachineC -0.374  0.301
 
 This is alpha software. It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. The testuite only tests against a single version of R and the current version of lme4. In other words, even for the parts that do work for me, they may not work for you.
 
-Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer. 
+Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer.
 This package generally follows the Julia community standard [SemVer](https://semver.org/).
-As this package has not yet hit 1.0, we follow these general conventions: 
-  - Non-exported functions may change or disappear even with a patch release. Exported functions should otherwise only increase in functionality between patch versions; supporting additional syntax is not considered a breaking change. In other words, errors and exceptions disappearing as more conversions are supported is not breaking. Small improvements will be accompanied by a patch version bump. 
+As this package has not yet hit 1.0, we follow these general conventions:
+  - Non-exported functions may change or disappear even with a patch release. Exported functions should otherwise only increase in functionality between patch versions; supporting additional syntax is not considered a breaking change. In other words, errors and exceptions disappearing as more conversions are supported is not breaking. Small improvements will be accompanied by a patch version bump.
   - Large improvements and potentially breaking changes will be accompanied by a minor version bump.
 
 Only a subset of all the options available in `MixedModels` and `lme4` are supported. Unsupported things should break in an obvious way, but here's a list of things that are more commonly used but may break non obviously:
 - ~~**custom contrast coding**. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.~~ This should work if you're not doing anything weird with your interaction terms.
-- ~~**advanced models in either language** (e.g., `zerocorr!`, `fulldummy` in Julia or `||` in R, which are not completely synonymous anyway).~~ This should largely work, but there are a few edge cases, especially when combining these, that might not work. `dummy` in R will not be translated -- create your indicator variables ahead of time and not as part of the formula.  `zerocorr` will work with continuous variables and categorical variables with two levels using `lme4` on the R side. Categorical variables with more than two levels require the R package [`afex`](https://cran.r-project.org/web/packages/afex) to be installed for `zerocorr` to be translated correctly. See [Alternative lmer](#alternative--lmer-) below.  Posthoc `zerocorr!` is not detected. Use `zerocorr` in your formula instead.
+- ~~**advanced models in either language** (e.g., `zerocorr!`, `fulldummy` in Julia or `||` in R, which are not completely synonymous anyway).~~ This should largely work, but there are a few edge cases, especially when combining these, that might not work. `dummy` in R will not be translated -- create your indicator variables ahead of time and not as part of the formula.  `zerocorr` will work with continuous variables and categorical variables with two levels using `lme4` on the R side. Categorical variables with more than two levels require the R package [`afex`](https://cran.r-project.org/web/packages/afex) to be installed for `zerocorr` to be translated correctly. See [Alternative lmer](#alternative--lmer-) below. Using `||` in R and translating to Julia will currently fail with categorical variables.
 - **fancy transformations within model formulae**, especially those that have different names (e.g. `scale()` in R). If in doubt, pre-transform your data in the dataframe before fitting. A few transformations are supported (e.g. `log`, `exp`) and you should receive an error for unsupported transformations, but it's always a good idea to compare the estimates of the original and copied models.
 - **missing data** is handled differently in R and Julia, both in its representation and when it's eliminated. If in doubt, remove missing data before fitting models for consistency.
 - **interactions specified in R with `^`**. This part of the parsing is handled by RCall and winds up getting translated into simple exponentiation instead of "interactions below a certain order".  Consider using the [`simplify.formula`](https://www.rdocumentation.org/packages/MuMIn/versions/1.9.5/topics/Formula%20manipulation) function from the [`MuMIn` package](https://cran.r-project.org/web/packages/MuMIn/index.html) in R to simplify your formula to primitive operations before calling lme4.
 - **other R-specific extensions to Wilkinson-Roger notation**. This includes `%in%` for nesting, (`/` for nesting, with reversed order should work because lme4 and MixedModels both handle that specially), `I()` for literal interpretation of arithmetic, `offset()`.
-- **rank deficiency in the fixed effects** is handled differently in R and Julia. If in doubt, [remove extraneous columns/predictors](https://juliastats.org/MixedModels.jl/dev/rankdeficiency/#Rank-deficiency-in-mixed-effects-models) before fitting models for consistency.  
+- **rank deficiency in the fixed effects** is handled differently in R and Julia. If in doubt, [remove extraneous columns/predictors](https://juliastats.org/MixedModels.jl/dev/rankdeficiency/#Rank-deficiency-in-mixed-effects-models) before fitting models for consistency.
 - **GLMMs with dispersion parameters**. This should error when unsupported model types are encountered. This is intentionally not supported at the moment because there are [known problems with these models in MixedModels.jl](JuliaStats/MixedModels#291).
-- **getting binomial GLMMs from R with any of the alternative specifications**, e.g. `cbind(successes, failures)` or `successes/total`. You will receive a gentle reminder in the form of an error. Note that even once this is supported, you're subject to the constraints above. 
+- **getting binomial GLMMs from R with any of the alternative specifications**, e.g. `cbind(successes, failures)` or `successes/total`. You will receive a gentle reminder in the form of an error. Note that even once this is supported, you're subject to the constraints above.
 - **getting GLMMs with `quasi` families from R**. The corresponding distributions aren't in Distributions.jl and are only "quasi" in the GLM/GLMM framework.
 - **a number of scratch variables in R prefixed by `jellyme4_` are created.** We need scratch variables when moving things to R, so we use  identifiers beginning with `jellyme4_`.
 
@@ -224,8 +224,8 @@ By default, JellyMe4 uses `[g]lmer` from `lme4`, as this is the closest equivale
 julia> ENV["LMER"] = "lmerTest::lmer" # if you really need Satterthwaite or Kenward-Roger ddf
 julia> ENV["LMER"] = "afex::lmer_alt" # for better handling of the || syntax
 julia> using RCall, JellyMe4
-``` 
-There is currently no public API for changing this after loading the package. For `lmerTest`, it is possible to modify the resultant `lme4::lmerMod` object to be an `lmerTest::merModLmerTest` after the fact: 
+```
+There is currently no public API for changing this after loading the package. For `lmerTest`, it is possible to modify the resultant `lme4::lmerMod` object to be an `lmerTest::merModLmerTest` after the fact:
 It is also possible to do this conversion after the fact :
 ```R
 R> mod = as(mod, "merModLmerTest")
@@ -235,12 +235,12 @@ If `afex` is installed and you attempt to convert a `zerocorr` model with a cate
 
 ### R to Julia
 
-Models fit with the R package [`lmerTest`](https://cran.r-project.org/web/packages/lmerTest/) should work without difficulty as `lmerTest` does not modify the fitting process nor the relevant internal structure of the model of `lme4`. 
+Models fit with the R package [`lmerTest`](https://cran.r-project.org/web/packages/lmerTest/) should work without difficulty as `lmerTest` does not modify the fitting process nor the relevant internal structure of the model of `lme4`.
 Note that the functionality related to denominator degrees of freedom (e.g. Satterthwaite or Kenward-Roger approximations) are not currently implemented in `MixedModels` and thus this functionality will be lost.
 
-Models fit with the R package [`afex`](https://cran.r-project.org/web/packages/afex/) should also largely be compatible, as `afex` works by providing a more convenient interface to `lme4`. 
-Note however that if any of `afex`'s behind the scenes rewrite-rules invoke features not yet supported, then the resulting models will not work with JellyMe4. 
-In particular, `afex` directly modifies the model matrix to fix the limitation in the `||` syntax and this will almost definitely not work in JellyMe4. 
+Models fit with the R package [`afex`](https://cran.r-project.org/web/packages/afex/) should also largely be compatible, as `afex` works by providing a more convenient interface to `lme4`.
+Note however that if any of `afex`'s behind the scenes rewrite-rules invoke features not yet supported, then the resulting models will not work with JellyMe4.
+In particular, `afex` directly modifies the model matrix to fix the limitation in the `||` syntax and this will almost definitely not work in JellyMe4.
 This could probably be made to work, but it seems needlessly complicated given that the assumption is that most models are easier to fit with `MixedModels` than `lme4` and that the package is primarily for moving models from Julia to R.
 In any case, please check your model summary on both sides to make sure they line up!
 
