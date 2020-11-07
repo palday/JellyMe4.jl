@@ -87,14 +87,16 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     θ = m.θ
     rsteps = 1
     REML = m.optsum.REML ? "TRUE" : "FALSE"
-    jellyme4_theta = m.optsum.final
+    # lme4 sorts the order of RE terms based on nlevels of the grouping var
+    reperm = sort(1:length(m.reterms);
+                  rev=true,
+                  by=x-> length(m.reterms[x].levels))
+    jellyme4_theta = vcat(MixedModels.getθ.(m.reterms)[reperm]...)
     fval = m.optsum.fmin
     feval = m.optsum.feval
     conv = m.optsum.returnvalue == :SUCCESS ? 0 : 1
     optimizer = String(m.optsum.optimizer)
     message = "fit with MixedModels.jl"
-    # yes, it overwrites any variable named data, but you shouldn't be naming
-    # your variables that anyway!
     @rput jellyme4_data
     @rput jellyme4_theta
 

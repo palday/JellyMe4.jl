@@ -51,7 +51,7 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     # but that will involve more R black magic
     data = rcopy(R"eval($(s[:call][:data]))")
     # end
-    
+
     try
         contrasts = rcopy(s[:call][:contrasts])
         @error "Contrasts must be specified in the dataframe, not the glmer() call"
@@ -61,9 +61,9 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
         end
         # no extra contrasts defined, we continue on our way
     end
-    
+
     contrasts = get_r_contrasts(s[:frame])
-    
+
     wts = []
     try
         wts = rcopy(s[:call][:weights])
@@ -179,7 +179,11 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     end
     formula = convert_julia_to_r(m.formula)
 
-    jellyme4_theta = m.θ
+    # lme4 sorts the order of RE terms based on nlevels of the grouping var
+    reperm = sort(1:length(m.reterms);
+                  rev=true,
+                  by=x-> length(m.reterms[x].levels))
+    jellyme4_theta = vcat(MixedModels.getθ.(m.reterms)[reperm]...)
     jellyme4_beta = m.β
     jellyme4_weights = m.wt
     length(jellyme4_weights) > 0 || (jellyme4_weights = nothing)
@@ -191,7 +195,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     rsteps = 1;
 
     betastart = nAGQ > 0 ? "fixef=jellyme4_beta, " : ""
-    
+
     GLMER = LMER in ("afex::lmer_alt", "lmer_alt") ? LMER : "lme4::glmer"
 
     @rput jellyme4_data
