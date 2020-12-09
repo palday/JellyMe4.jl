@@ -28,9 +28,11 @@ const GLMM = GeneralizedLinearMixedModel
     # capitalization than in R
     sleepstudy = rcopy(R"sleepstudy")
 
+    kb07 = dataset(:kb07)
+
     @testset "get lmerMod" begin
         ### from R ###
-        
+
         jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy), REML=false)
         rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
 
@@ -44,7 +46,7 @@ const GLMM = GeneralizedLinearMixedModel
         @test jlmm.θ ≈ rlmm.θ atol=0.001
         @test objective(jlmm) ≈ objective(rlmm) atol=0.001
         @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
-        
+
         @testset "merModLmerTest" begin
             jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days|Subject)),sleepstudy), REML=false)
             rlmm = rcopy(R"m <- lmerTest::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
@@ -85,13 +87,13 @@ const GLMM = GeneralizedLinearMixedModel
             #                              contrasts=list(temperature=contr.helmert))""");
             # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
         end
-        
+
         @testset "double-bar" begin
             # double bar works because lme4 treats this internally as a rewrite rule into distinct terms
             # the distinct terms are handled the same way in both languages, so everything is fine.
             # printing differs a lot between languages, but that's life
-            
-            
+
+
             reval("""
             machines <- as.data.frame(nlme::Machines)
             mach <- lme4::lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
@@ -102,9 +104,9 @@ const GLMM = GeneralizedLinearMixedModel
             # splitting terms up this way!
             jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
             # as a cheat for comparing the covariance matrices, we use packages
-            @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05          
+            @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05
         end
-        
+
         @testset "dummy" begin
             # TODO
         end
@@ -148,6 +150,19 @@ const GLMM = GeneralizedLinearMixedModel
             @test_throws ArgumentError (@rput jm)
         end
 
+        @testset "sorting by n BLUPs vs. n groups" begin
+            jlmm = fit(LMM, @formula(rt_trunc ~ 1 + (1|subj)+(1+load+prec+spkr|item)), kb07)
+            jm = (jlmm, kb07)
+            @rput jm
+            @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
+            @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
+            @test all(isapprox.(collect(VarCorr(jlmm).σρ.item.σ),
+                                rcopy(R"""attr(VarCorr(jm)[["item"]], "stddev")""")))
+            @test all(isapprox.(collect(VarCorr(jlmm).σρ.subj.σ),
+                                rcopy(R"""attr(VarCorr(jm)[["subj"]], "stddev")""")))
+        end
+
+
         @testset "contrasts" begin
             cake = rcopy(reval("""
             data(cake)
@@ -160,7 +175,7 @@ const GLMM = GeneralizedLinearMixedModel
             @rput jm;
             @test fixef(jlmm) ≈  rcopy(R"fixef(jm)");
         end
-        
+
 
         @testset "fulldummy" begin
             machines = rcopy(R"as.data.frame(nlme::Machines)")
@@ -170,15 +185,15 @@ const GLMM = GeneralizedLinearMixedModel
             rlmmrepca = rcopy(R"summary(rePCA(rlmm))$Worker$importance[3,]")
             @test  rlmmrepca ≈ only(jlmm.rePCA) atol=0.05
         end
-                
-        @testset "zerocorr" begin            
+
+        @testset "zerocorr" begin
             # TODO: test fulldummy within a zerocorr when zerocorr is better supported
 
-        
+
             @testset "lme4" begin
                 _set_lmer("lme4::lmer")
                 _set_afex_installed(false)
-                
+
                 jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days|Subject)),sleepstudy), REML=false)
                 rlmm = (jlmm, sleepstudy)
                 @rput rlmm
@@ -187,12 +202,12 @@ const GLMM = GeneralizedLinearMixedModel
                 @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
                 @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
             end
-            
-            
+
+
             @testset "afex" begin
-               
+
                 machines = rcopy(R"as.data.frame(nlme::Machines)")
-                
+
                 jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + zerocorr(0+Machine|Worker)), machines)
 
                 @testset "afex pre-enabled" begin
@@ -203,7 +218,7 @@ const GLMM = GeneralizedLinearMixedModel
                     @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
                     @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
                 end
-                
+
                 @testset "afex auto-enabled" begin
                     _set_lmer("lme4::lmer")
                     _set_afex_installed(true)
@@ -213,14 +228,14 @@ const GLMM = GeneralizedLinearMixedModel
                     @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
                     @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
                 end
-                
+
                 @testset "afex unavailable" begin
                     _set_lmer("lme4::lmer")
                     _set_afex_installed(false)
                     rlmm = (jlmm, machines)
                     @test_throws ArgumentError @rput rlmm
                 end
-            end           
+            end
 
         end
     end
