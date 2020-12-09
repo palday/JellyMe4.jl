@@ -29,15 +29,21 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v2
-      - uses: r-lib/actions/setup-r@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: R Setup
+        uses: r-lib/actions/setup-r@v1
         with:
           r-version: ${{ matrix.R }}
-      - uses: julia-actions/setup-julia@v1
+      - name: R Dependencies
+        run: Rscript -e "install.packages(c('lme4','afex'))"
+      - name: Julia Setup
+        uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v1
+      - name: Cache
+        uses: actions/cache@v1
         env:
           cache-name: cache-artifacts
         with:
@@ -47,9 +53,12 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+      - name: Build
+        uses: julia-actions/julia-buildpkg@v1
+      - name: Test
+        uses: julia-actions/julia-runtest@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: julia-actions/julia-uploadcodecov@v0.1
+      - name: Coverage
+        uses: julia-actions/julia-uploadcodecov@v0.1
         if:  ${{ startsWith(matrix.os, 'macOS') && (matrix.julia-version == '1') }}
