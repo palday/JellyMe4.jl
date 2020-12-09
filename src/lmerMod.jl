@@ -50,11 +50,17 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     f = rcopy(R"as.formula($(s)@call$formula)")
     data = rcopy(s[:frame])
     contrasts = get_r_contrasts(s[:frame])
-
     θ = rcopyarray(s[:theta])
     reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
 
     m = LinearMixedModel(f, data, contrasts=contrasts)
+
+    if length(θ) != length(m.θ)
+        @error """You're probably using || in R with a categorical variable,
+                  whose translation is currently unsupported with MixedModels 3.0."""
+        throw(ArgumentError("Parameter vectors in R and Julia are different sizes."))
+    end
+
     m.optsum.REML = reml
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     # I'm wondering if this be filled in from the Julia side

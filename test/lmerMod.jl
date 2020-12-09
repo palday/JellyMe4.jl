@@ -86,24 +86,30 @@ const GLMM = GeneralizedLinearMixedModel
             # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
         end
 
-        # @testset "double-bar" begin
-        #     # double bar works because lme4 treats this internally as a rewrite rule into distinct terms
-        #     # the distinct terms are handled the same way in both languages, so everything is fine.
-        #     # printing differs a lot between languages, but that's life
+        @testset "double-bar" begin
+            # double bar works because lme4 treats this internally as a rewrite rule into distinct terms
+            # the distinct terms are handled the same way in both languages, so everything is fine.
+            # printing differs a lot between languages, but that's life
 
 
-        #     reval("""
-        #     machines <- as.data.frame(nlme::Machines)
-        #     mach <- lme4::lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
-        #     """)
-        #     machines = rcopy(R"machines")
-        #     rlmm = rcopy(R"mach")
-        #     # note that is the lme4 definition of double || -- it really is just a convenience wrapper for
-        #     # splitting terms up this way!
-        #     jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
-        #     # as a cheat for comparing the covariance matrices, we use packages
-        #     @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05
-        # end
+            reval("""
+            machines <- as.data.frame(nlme::Machines)
+            mach <- lme4::lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
+            """)
+            machines = rcopy(R"machines")
+            @test_throws ArgumentError rlmm = rcopy(R"mach")
+
+            # note that is the lme4 definition of double || -- it really is just a convenience wrapper for
+            # splitting terms up this way!
+            # jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (fulldummy(Machine)|Worker)), machines)
+            # as a cheat for comparing the covariance matrices, we use PCA
+            # @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05
+
+            rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days||Subject),sleepstudy,REML=FALSE)")
+            jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days|Subject)),sleepstudy), REML=false)
+            # as a cheat for comparing the covariance matrices, we use PCA
+            @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05
+        end
 
         @testset "dummy" begin
             # TODO
@@ -162,14 +168,14 @@ const GLMM = GeneralizedLinearMixedModel
         end
 
 
-        # @testset "fulldummy" begin
-        #     machines = rcopy(R"as.data.frame(nlme::Machines)")
-        #     jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1 + fulldummy(Machine)|Worker)), machines)
-        #     rlmm = (jlmm, machines)
-        #     @rput rlmm
-        #     rlmmrepca = rcopy(R"summary(rePCA(rlmm))$Worker$importance[3,]")
-        #     @test  rlmmrepca ≈ only(jlmm.rePCA) atol=0.05
-        # end
+        @testset "fulldummy" begin
+            machines = rcopy(R"as.data.frame(nlme::Machines)")
+            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1 + fulldummy(Machine)|Worker)), machines)
+            rlmm = (jlmm, machines)
+            @rput rlmm
+            rlmmrepca = rcopy(R"summary(rePCA(rlmm))$Worker$importance[3,]")
+            @test  rlmmrepca ≈ only(MixedModels.rePCA(jlmm; corr=false)) atol=0.05
+        end
 
         @testset "zerocorr" begin
             # TODO: test fulldummy within a zerocorr when zerocorr is better supported
