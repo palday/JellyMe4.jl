@@ -116,6 +116,13 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     θ = rcopyarray(s[:theta])
     β = rcopyarray(s[:beta])
+
+    if length(θ) != length(m.θ)
+        @error """You're probably using || in R with a categorical variable,
+                  whose translation is currently unsupported with MixedModels 3.0."""
+        throw(ArgumentError("Parameter vectors in R and Julia are different sizes."))
+    end
+
     m.optsum.final = fast ? θ : [β; θ]
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
     m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS

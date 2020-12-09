@@ -40,7 +40,7 @@ const GLMM = GeneralizedLinearMixedModel
         @test objective(jlmm) ≈ objective(rlmm) atol=0.001
         @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
 
-        jlmm = fit!(jlmm, REML=true)
+        jlmm = refit!(jlmm, REML=true)
         rlmm = rcopy(R"update(m, REML=TRUE)")
 
         @test jlmm.θ ≈ rlmm.θ atol=0.001
@@ -55,7 +55,7 @@ const GLMM = GeneralizedLinearMixedModel
             @test objective(jlmm) ≈ objective(rlmm) atol=0.001
             @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
 
-            jlmm = fit!(jlmm, REML=true)
+            jlmm = refit!(jlmm, REML=true)
             rlmm = rcopy(R"update(m, REML=TRUE)")
 
             @test jlmm.θ ≈ rlmm.θ atol=0.001
@@ -99,11 +99,17 @@ const GLMM = GeneralizedLinearMixedModel
             mach <- lme4::lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
             """)
             machines = rcopy(R"machines")
-            rlmm = rcopy(R"mach")
+            @test_throws ArgumentError rlmm = rcopy(R"mach")
+
             # note that is the lme4 definition of double || -- it really is just a convenience wrapper for
             # splitting terms up this way!
-            jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (0+Machine|Worker)), machines)
-            # as a cheat for comparing the covariance matrices, we use packages
+            # jlmm = fit(MixedModel, @formula(score ~ 1 +  Machine + (1|Worker) + (fulldummy(Machine)|Worker)), machines)
+            # as a cheat for comparing the covariance matrices, we use PCA
+            # @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05
+
+            rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days||Subject),sleepstudy,REML=FALSE)")
+            jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days|Subject)),sleepstudy), REML=false)
+            # as a cheat for comparing the covariance matrices, we use PCA
             @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol=0.05
         end
 
@@ -123,7 +129,7 @@ const GLMM = GeneralizedLinearMixedModel
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
         @test rcopy(R"REMLcrit(jm)") ≈ objective(jlmm)
 
-        fit!(jlmm, REML=false)
+        refit!(jlmm, REML=false)
         jm = (jlmm, sleepstudy)
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
@@ -183,7 +189,7 @@ const GLMM = GeneralizedLinearMixedModel
             rlmm = (jlmm, machines)
             @rput rlmm
             rlmmrepca = rcopy(R"summary(rePCA(rlmm))$Worker$importance[3,]")
-            @test  rlmmrepca ≈ only(jlmm.rePCA) atol=0.05
+            @test  rlmmrepca ≈ only(MixedModels.rePCA(jlmm; corr=false)) atol=0.05
         end
 
         @testset "zerocorr" begin
@@ -223,7 +229,9 @@ const GLMM = GeneralizedLinearMixedModel
                     _set_lmer("lme4::lmer")
                     _set_afex_installed(true)
                     rlmm = (jlmm, machines)
-                    @test_logs (:info, r"afex::lmer_alt") @rput rlmm
+                    # match_mode needs to specified in case there are further
+                    # warnings from R/RCall
+                    @test_logs (:info, r"afex::lmer_alt") match_mode=:any @rput rlmm
                     @test only(ranef(jlmm))' ≈ Matrix(rcopy(R"ranef(rlmm)$Worker"))
                     @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
                     @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
