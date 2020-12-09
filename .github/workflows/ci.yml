@@ -1,0 +1,64 @@
+name: CI
+on:
+  push:
+      paths-ignore:
+        - 'README.md'
+      branches:
+        - master
+  pull_request:
+      paths-ignore:
+        - 'README.md'
+      branches:
+        - master
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - R ${{ matrix.R }}- ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.4'
+          - '1'
+        R:
+          - '4.0'
+        os:
+          # - ubuntu-latest # linux currently doesn't work because of lib issues
+          - macOS-latest
+          - windows-latest
+        arch:
+          - x64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: R Setup
+        uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: ${{ matrix.R }}
+      - name: R Dependencies
+        run: Rscript -e "install.packages(c('lme4','afex'))"
+      - name: Julia Setup
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - name: Cache
+        uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - name: Build
+        uses: julia-actions/julia-buildpkg@v1
+      - name: Test
+        uses: julia-actions/julia-runtest@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Coverage
+        uses: julia-actions/julia-uploadcodecov@v0.1
+        if:  ${{ startsWith(matrix.os, 'macOS') && (matrix.version == '1') }}
