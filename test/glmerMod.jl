@@ -1,6 +1,7 @@
 using RCall, MixedModels, Test
 using StatsBase: zscore
 using Tables: columntable
+using GLM
 import GLM: Link
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
@@ -40,7 +41,7 @@ logistic(x)  = 1 / (1 + exp(-x))
             @test stderror(rlmm) ≈ rcopy(R"""coef(summary(rlmm))[,"Std. Error"]""") atol=0.1
             @test rcopy(R"logLik(rlmm)") ≈ loglikelihood(rlmm) atol=0.001
 
-            @testset "alternative response specifications" begin            
+            @testset "alternative response specifications" begin
                 # R"""
                 # # from lme4 ?cbpp
                 # ## response as a matrix
@@ -50,7 +51,7 @@ logistic(x)  = 1 / (1 + exp(-x))
                 #  m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
                 #               family = binomial, data = cbpp)
                 # """
-            
+
                 @testset "cbind" begin
                 end
 
@@ -90,7 +91,7 @@ logistic(x)  = 1 / (1 + exp(-x))
                     """)
 
                     rlmm = rcopy(R"rlmm")
-                    @test string(Link(rlmm.resp)) == "GLM.ProbitLink()"
+                    @test Link(rlmm.resp) isa GLM.ProbitLink
                     @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm) atol=0.001
                     @test_broken rcopy(R"-2 * logLik(rlmm)") ≈ deviance(rlmm) atol=0.001
                     # this is where the weights have their biggest impact
