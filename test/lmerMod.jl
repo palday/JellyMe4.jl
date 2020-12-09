@@ -214,7 +214,9 @@ const GLMM = GeneralizedLinearMixedModel
                     _set_lmer("lme4::lmer")
                     _set_afex_installed(true)
                     rlmm = (jlmm, machines)
-                    @test_logs (:info, r"afex::lmer_alt") @rput rlmm
+                    # match_mode needs to specified in case there are further
+                    # warnings from R/RCall
+                    @test_logs (:info, r"afex::lmer_alt") match_mode=:any @rput rlmm
                     @test only(ranef(jlmm))' ≈ Matrix(rcopy(R"ranef(rlmm)$Worker"))
                     @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
                     @test vcov(jlmm) ≈ rcopy(R"as.matrix(vcov(rlmm))")
