@@ -23,9 +23,9 @@ jobs:
         R:
           - '4.0'
         os:
-          # - ubuntu-latest
+          # - ubuntu-latest # linux currently doesn't work because of lib issues
           - macOS-latest
-          # - windows-latest
+          - windows-latest
         arch:
           - x64
     steps:
