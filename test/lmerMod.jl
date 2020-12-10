@@ -28,6 +28,8 @@ const GLMM = GeneralizedLinearMixedModel
     # capitalization than in R
     sleepstudy = rcopy(R"sleepstudy")
 
+    kb07 = dataset(:kb07)
+
     @testset "get lmerMod" begin
         ### from R ###
 
@@ -72,6 +74,17 @@ const GLMM = GeneralizedLinearMixedModel
             @test jlmm.θ ≈ rlmm.θ atol=0.001
             @test objective(jlmm) ≈ objective(rlmm) atol=0.001
             @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
+        end
+
+        @testset "sorting by n BLUPs vs. n groups" begin
+            @rput kb07
+            rlmm = rcopy(R"rlmm <- lmer(rt_trunc ~ 1 + (1|subj)+(1+load+prec+spkr|item), $(kb07), REML=FALSE)")
+            @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm)
+            @test rcopy(R"deviance(rlmm)") ≈ objective(rlmm)
+            @test all(isapprox.(collect(VarCorr(rlmm).σρ.item.σ),
+                                rcopy(R"""attr(VarCorr(rlmm)[["item"]], "stddev")""")))
+            @test all(isapprox.(collect(VarCorr(rlmm).σρ.subj.σ),
+                                rcopy(R"""attr(VarCorr(rlmm)[["subj"]], "stddev")""")))
         end
 
         @testset "contrasts" begin
@@ -153,6 +166,19 @@ const GLMM = GeneralizedLinearMixedModel
 
             @test_throws ArgumentError (@rput jm)
         end
+
+        @testset "sorting by n BLUPs vs. n groups" begin
+            jlmm = fit(LMM, @formula(rt_trunc ~ 1 + (1|subj)+(1+load+prec+spkr|item)), kb07)
+            jm = (jlmm, kb07)
+            @rput jm
+            @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
+            @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
+            @test all(isapprox.(collect(VarCorr(jlmm).σρ.item.σ),
+                                rcopy(R"""attr(VarCorr(jm)[["item"]], "stddev")""")))
+            @test all(isapprox.(collect(VarCorr(jlmm).σρ.subj.σ),
+                                rcopy(R"""attr(VarCorr(jm)[["subj"]], "stddev")""")))
+        end
+
 
         @testset "contrasts" begin
             cake = rcopy(reval("""

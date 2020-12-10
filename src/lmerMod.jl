@@ -61,12 +61,14 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
         throw(ArgumentError("Parameter vectors in R and Julia are different sizes."))
     end
 
+    θ = _reorder_theta_from_lme4(θ, m)
+
     m.optsum.REML = reml
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     # I'm wondering if this be filled in from the Julia side
     m.optsum.final = rcopyarray(s[:optinfo][:val])
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
-    m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
+    m.optsum.returnvalue = rcopy(s[:optinfo][:conv][:opt]) == 0 ? :FAILURE : :SUCCESS
     m.optsum.fmin = reml ? rcopy(s[:devcomp][:cmp][:REML]) : rcopy(s[:devcomp][:cmp][:dev])
     updateL!(setθ!(m, θ))
 end
@@ -93,14 +95,12 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     θ = m.θ
     rsteps = 1
     REML = m.optsum.REML ? "TRUE" : "FALSE"
-    jellyme4_theta = m.optsum.final
+    jellyme4_theta = _reorder_theta_to_lme4(m)
     fval = m.optsum.fmin
     feval = m.optsum.feval
     conv = m.optsum.returnvalue == :SUCCESS ? 0 : 1
     optimizer = String(m.optsum.optimizer)
     message = "fit with MixedModels.jl"
-    # yes, it overwrites any variable named data, but you shouldn't be naming
-    # your variables that anyway!
     @rput jellyme4_data
     @rput jellyme4_theta
 

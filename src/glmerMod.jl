@@ -123,9 +123,11 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
         throw(ArgumentError("Parameter vectors in R and Julia are different sizes."))
     end
 
+    θ = _reorder_theta_from_lme4(θ, m)
+
     m.optsum.final = fast ? θ : [β; θ]
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
-    m.optsum.returnvalue = Bool(rcopy(s[:optinfo][:conv][:opt])) ? :FAILURE : :SUCCESS
+    m.optsum.returnvalue = rcopy(s[:optinfo][:conv][:opt]) == 0 ? :FAILURE : :SUCCESS
     m.optsum.fmin = rcopy(s[:devcomp][:cmp][:dev])
     m.optsum.nAGQ = nAGQ
     setpar! = fast ? setθ! : setβθ!
@@ -186,7 +188,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     end
     formula = convert_julia_to_r(m.formula)
 
-    jellyme4_theta = m.θ
+    jellyme4_theta = _reorder_theta_to_lme4(m)
     jellyme4_beta = m.β
     jellyme4_weights = m.wt
     length(jellyme4_weights) > 0 || (jellyme4_weights = nothing)

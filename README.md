@@ -192,6 +192,14 @@ MachineB  0.463
 MachineC -0.374  0.301
 ```
 
+Note that when moving models from Julia to R, you may see warnings like:
+```julia
+┌ Warning: RCall.jl: Warning in optwrap(optimizer, devfun, start, rho$lower, control = control,  :
+│   convergence code 5 from nloptwrap: NLOPT_MAXEVAL_REACHED: Optimization stopped because maxeval (above) was reached.
+```
+
+This is expected because we don't allow optimization to stop naturally when moving models back forth, but instead force optimization to stop *because we already found an optimum in the other language*.
+
 ## Limitations and warnings
 
 This is alpha software. It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. The testuite only tests against a single version of R and the current version of lme4. In other words, even for the parts that do work for me, they may not work for you.

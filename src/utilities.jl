@@ -1,6 +1,7 @@
 import CategoricalArrays: CategoricalArray
 import LinearAlgebra: pinv
 using DataFrames
+using MixedModels: getθ, nranef
 import RCall: rcopy,
               reval,
               @R_str
@@ -11,7 +12,7 @@ _guarantee_array(val) = [val]
 
 """
     rcopyarray(robj)
-    
+
 Copy an object from R, guaranteeing that it is an array.
 
 This is useful to undo RCall's automatic conversion of size 1 arrays to scalars.
@@ -27,7 +28,7 @@ function get_r_contrasts(rdf)
     # get categorical columns
     cnames = [c for c in propertynames(data)  if typeof(data[!, c]) <: CategoricalArray]
     Dict(c => HypothesisCoding(pinv(rcopy(R"contrasts($(rdf[c]))")),
-                               labels=rcopyarray( R"colnames(contrasts($(rdf[c])))" ) 
+                               labels=rcopyarray( R"colnames(contrasts($(rdf[c])))" )
                                )
          for c in cnames)
 end
@@ -68,4 +69,42 @@ function set_r_contrasts!(rdfname, formula)
         end
     end
     rdfname
+end
+
+
+#####
+##### See GitHub issue #38 on ordering
+#####
+
+function _reorder_theta_from_lme4(θlme4, model)
+    reterms = model.reterms
+
+    # not the most efficient procedure, but it's not too hard
+
+    # put them in lme4 order
+    rr = sort(reterms; rev=true, by=x -> length(x.levels) )
+    # compute the permutation from lme4 to julia
+    reperm = sort(1:length(rr); rev=true, by=x -> nranef(rr[x]))
+
+    # extract the individual theta blocks
+    start = 1
+    θs = []
+    for r in rr
+        finish = start + length(getθ(r)) - 1
+        push!(θs, θlme4[start:finish])
+        start = finish + 1
+    end
+
+    # permute
+    θjulia = vcat(θs[reperm]...)
+    return θjulia
+end
+
+function _reorder_theta_to_lme4(model)
+    # lme4 sorts the order of RE terms based on nlevels of the grouping var
+    reperm = sort(1:length(model.reterms);
+                  rev=true,
+                  by=x-> length(model.reterms[x].levels))
+
+    return vcat(getθ.(model.reterms)[reperm]...)
 end
