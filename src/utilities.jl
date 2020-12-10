@@ -108,12 +108,3 @@ function _reorder_theta_to_lme4(model)
 
     return vcat(getθ.(model.reterms)[reperm]...)
 end
-
-#=
-for model in (ticks, kb)
-    re = @. string(getproperty(model.reterms, :trm));
-    lme4 = sort(1:length(model.reterms); rev=true, by=x-> length(model.reterms[x].levels));
-    julia = invperm(lme4)
-    @show re, re[lme4], re[lme4][julia]
-end
-=#
