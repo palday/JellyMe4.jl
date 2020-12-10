@@ -76,6 +76,17 @@ const GLMM = GeneralizedLinearMixedModel
             @test fixef(jlmm) ≈ fixef(rlmm) atol=0.001
         end
 
+        @testset "sorting by n BLUPs vs. n groups" begin
+            @rput kb07
+            rlmm = rcopy(R"rlmm <- lmer(rt_trunc ~ 1 + (1|subj)+(1+load+prec+spkr|item), $(kb07), REML=FALSE)")
+            @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm)
+            @test rcopy(R"deviance(rlmm)") ≈ objective(rlmm)
+            @test all(isapprox.(collect(VarCorr(rlmm).σρ.item.σ),
+                                rcopy(R"""attr(VarCorr(rlmm)[["item"]], "stddev")""")))
+            @test all(isapprox.(collect(VarCorr(rlmm).σρ.subj.σ),
+                                rcopy(R"""attr(VarCorr(rlmm)[["subj"]], "stddev")""")))
+        end
+
         @testset "contrasts" begin
             reval("""
             data(cake)

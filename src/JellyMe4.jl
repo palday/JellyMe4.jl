@@ -19,12 +19,12 @@ function __init__()
     # should we assume the user is smart enough?
     # reval("library(lme4)")
     if !rcopy(R""" "lme4" %in% installed.packages() """)
-        @error "lme4 not found" 
+        @error "lme4 not found"
     end
 
     global LMER = get(ENV, "LMER", "lme4::lmer")
     global AFEX_INSTALLED = rcopy(R""" "afex" %in% installed.packages() """)
-    
+
     nothing
 end
 
