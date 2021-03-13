@@ -10,19 +10,19 @@ logistic(x)  = 1 / (1 + exp(-x))
 
 @testset "glmerMod" begin
     reval("""
-    if(!require(lme4)){
+    if(!("lme4" %in% installed.packages())){
         # use tmp for tests if lme4 isn't available
         .libPaths("/tmp")
         lib <- .libPaths()[1L]
         install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
-        library(lme4)
     }
-    if(!require(afex)){
+    if(!("afex" %in% installed.packages())){
         .libPaths("/tmp")
         lib <- .libPaths()[1L]
         install.packages("afex",repos="https://cloud.r-project.org", libs=lib)
     }
     """)
+
 
     ### from R ###
     @testset "get glmerMod" begin

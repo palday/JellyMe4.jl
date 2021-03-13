@@ -216,8 +216,8 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
                                family=$family(link="$link"),
                                nAGQ=$(nAGQ),
                                weights=jellyme4_weights,
-                               control=glmerControl(optimizer="nloptwrap",
-                                                    optCtrl=list(maxeval=$(rsteps)),
+                               control=lme4::glmerControl(optimizer="nloptwrap",
+                                                          optCtrl=list(maxeval=$(rsteps)),
                                         calc.derivs=FALSE,
                                         check.nobs.vs.nRE= "warning"),
                                 start=list($(betastart)theta=jellyme4_theta))
