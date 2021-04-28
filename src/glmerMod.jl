@@ -32,7 +32,7 @@ import RCall: rcopy,
               @rput,
               @rget
 # if RCall is available, then so is DataFrames
-import DataFrames: DataFrame, categorical!
+using DataFrames
 import CategoricalArrays: CategoricalArray
 import Tables: columntable, ColumnTable
 

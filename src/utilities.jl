@@ -1,10 +1,22 @@
-import CategoricalArrays: CategoricalArray
+using CategoricalArrays
 import LinearAlgebra: pinv
 using DataFrames
 using MixedModels: getθ, nranef
 import RCall: rcopy,
               reval,
               @R_str
+
+"""
+    categorical!(df::DataFrame, cols::Vector{Symbol})
+    categorical!(df::DataFrame, col::Symbol)
+
+Convert `cols` of `df` to CategoricalArrays.
+
+This replaces functionality previously part of DataFrames.jl and
+is intentionally not exported to avoid type piracy.
+"""
+categorical!(df::DataFrame, cols::Vector{Symbol}) = transform!(df, (cc => categorical for cc in cols)...; renamecols=false)
+categorical!(df::DataFrame, col::Symbol) = transform!(df, col => categorical; renamecols=false)
 
 _guarantee_array(val::AbstractArray) = val
 _guarantee_array(val) = [val]
