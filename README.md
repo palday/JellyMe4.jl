@@ -6,6 +6,7 @@
 -->
 [![Test Status](https://github.com/palday/JellyMe4.jl/workflows/CI/badge.svg)](https://github.com/palday/JellyMe4.jl/actions)
 [![Codecov](https://codecov.io/gh/palday/JellyMe4.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/palday/JellyMe4.jl)
+[![DOI](https://zenodo.org/badge/240243868.svg)](https://zenodo.org/badge/latestdoi/240243868)
 
 <!-- [![Build Status](https://ci.appveyor.com/api/projects/status/github/palday/JellyMe4.jl?svg=true)](https://ci.appveyor.com/project/palday/JellyMe4-jl) -->
 
