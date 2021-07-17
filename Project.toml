@@ -1,7 +1,7 @@
 name = "JellyMe4"
 uuid = "19ac8677-9a15-4623-9afd-84acc6165ce7"
 authors = ["Phillip Alday <me@phillipalday.com>"]
-version = "0.2.4"
+version = "0.2.5"
 
 [deps]
 CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
@@ -25,7 +25,7 @@ RCall = "0.13"
 StatsBase = "0.31, 0.32, 0.33"
 StatsModels = "0.6.8"
 Tables = "0.2, 1.0"
-julia = "1.4"
+julia = "1.6"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
