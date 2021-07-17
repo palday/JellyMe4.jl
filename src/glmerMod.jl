@@ -229,9 +229,9 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     @debug r
     @warn """Some accuracy is lost in translation for GLMMs. This is fine with plotting, but proceed with caution for inferences.
              You can try letting the model "reconverge" in lme4 with
-                 update(model, control=glmerControl(optimizer="nloptwrap", calc.derivs=FALSE))."""
-    @info "lme4 handles deviance for GLMMs differently than MixedModels.jl"
-    @info "for the correct comparison, examine -2*logLik(RModel) and deviance(JuliaModel)"
+                 update(model, control=glmerControl(optimizer="nloptwrap", calc.derivs=FALSE)).""" maxlog=1
+    @info "lme4 handles deviance for GLMMs differently than MixedModels.jl" maxlog=1
+    @info "for the correct comparison, examine -2*logLik(RModel) and deviance(JuliaModel)" maxlog=1
     r = reval(r)
     r = protect(sexp(r))
     unprotect(1)
