@@ -92,10 +92,19 @@ const GLMM = GeneralizedLinearMixedModel
             cake\$rr <- with(cake, replicate:recipe)
             """);
             rlmm = rcopy(R"fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)");
-            @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
+            @test fixef(rlmm) ≈ rcopy(R"fixef(fm1)");
             # rlmm = rcopy(R"""fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
             #                              contrasts=list(temperature=contr.helmert))""");
             # @test fixef(rlmm) ≈  rcopy(R"fixef(fm1)");
+        end
+
+        @testset "caret" begin
+            reval("""
+            data(cake)
+            cake\$rr <- with(cake, replicate:recipe)
+            """);
+            rlmm = rcopy(R"fm1 <- lme4::lmer(angle ~ (recipe + temperature)^2 + (1|rr), cake, REML= FALSE)");
+            @test fixef(rlmm) ≈ rcopy(R"fixef(fm1)");
         end
 
         @testset "double-bar" begin

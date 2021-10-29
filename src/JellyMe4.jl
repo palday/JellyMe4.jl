@@ -2,6 +2,7 @@ module JellyMe4
 
 using RCall
 using StatsModels
+using RegressionFormulae
 using MixedModels
 
 export rcopy
