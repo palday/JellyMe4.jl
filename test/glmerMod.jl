@@ -87,7 +87,7 @@ logistic(x)  = 1 / (1 + exp(-x))
                     # TODO add tests for each link
                     reval("""
                     rlmm <- glmer(r2 ~ Anger + Gender + btype + situ + (1|id),
-                                        family = binomial(link=probit), data=VerbAgg)
+                                        family = binomial(link="probit"), data=VerbAgg)
                     """)
 
                     rlmm = rcopy(R"rlmm")
