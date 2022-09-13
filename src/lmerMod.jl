@@ -53,7 +53,7 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     θ = rcopyarray(s[:theta])
     reml = rcopy(s[:devcomp][:dims][:REML]) ≠ 0
 
-    m = LinearMixedModel(f, data, contrasts=contrasts)
+    m = LinearMixedModel(f, data; contrasts=contrasts)
 
     if length(θ) != length(m.θ)
         @error """You're probably using || in R with a categorical variable,
@@ -70,7 +70,7 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
     m.optsum.returnvalue = rcopy(s[:optinfo][:conv][:opt]) == 0 ? :FAILURE : :SUCCESS
     m.optsum.fmin = reml ? rcopy(s[:devcomp][:cmp][:REML]) : rcopy(s[:devcomp][:cmp][:dev])
-    updateL!(setθ!(m, θ))
+    return updateL!(setθ!(m, θ))
 end
 
 rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
@@ -81,7 +81,7 @@ rcopytype(::Type{RClass{:lmerModLmerTest}}, s::Ptr{S4Sxp}) = LinearMixedModel
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
 #          SET_VECTOR_ELT() can only be applied to a 'list', not a 'character'
-function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}) where T
+function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
     m, tbl = x
     if !isempty(m.sqrtwts)
         @error "weights are not currently supported"
@@ -121,16 +121,23 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     r = reval(r)
     r = protect(sexp(r))
     unprotect(1)
-    r
+    return r
 end
 
-sexpclass(x::Tuple{LinearMixedModel{T}, DataFrame}) where T = LMER in ("afex::lmer_alt", "lmer_alt") ? RClass{:lmerModLmerTest} : RClass{:lmerMod}
-sexp(::Type{RClass{:lmerModLmerTest}}, x::Tuple{LinearMixedModel{T}, DataFrame}) where T = sexp(RClass{:lmerMod}, x)
+function sexpclass(x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
+    return LMER in ("afex::lmer_alt", "lmer_alt") ? RClass{:lmerModLmerTest} :
+           RClass{:lmerMod}
+end
+function sexp(::Type{RClass{:lmerModLmerTest}},
+              x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
+    return sexp(RClass{:lmerMod}, x)
+end
 
 # generalize to ColumnTable, which is what MixedModels actually requires
-function sexp(ss::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, ColumnTable}) where T
-    m, t  = x
-    sexp(ss, (m, DataFrame(t)))
+function sexp(ss::Type{RClass{:lmerMod}},
+              x::Tuple{LinearMixedModel{T},ColumnTable}) where {T}
+    m, t = x
+    return sexp(ss, (m, DataFrame(t)))
 end
 
-sexpclass(x::Tuple{LinearMixedModel{T}, ColumnTable}) where T = RClass{:lmerMod}
+sexpclass(x::Tuple{LinearMixedModel{T},ColumnTable}) where {T} = RClass{:lmerMod}
