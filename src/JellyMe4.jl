@@ -38,6 +38,17 @@ function _set_afex_installed(s)
 end
 
 
+const MERCONTROL_OPTIONS = ["""optimizer="nloptwrap" """,
+                            """calc.derivs=FALSE""",
+                            """check.nobs.vs.rankZ = "warning" """,
+                            """check.nobs.vs.nlev = "warning" """,
+                            """check.nlev.gtreq.5 = "ignore" """,
+                            """check.nlev.gtr.1 = "warning" """,
+                            """check.nobs.vs.nRE= "warning" """,
+                            """check.rankX = "message+drop.cols" """,
+                            """check.scaleX = "warning" """,
+                            """check.formula.LHS = "stop" """]
+
 include("utilities.jl")
 include("formula.jl")
 include("merMod.jl")
