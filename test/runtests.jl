@@ -28,7 +28,6 @@ if(!require(afex)){
 }
 """)
 
-
 include("merMod.jl")
 include("lmerMod.jl")
 include("glmerMod.jl")

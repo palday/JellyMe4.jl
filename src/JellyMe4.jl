@@ -26,17 +26,16 @@ function __init__()
     global LMER = get(ENV, "LMER", "lme4::lmer")
     global AFEX_INSTALLED = rcopy(R""" "afex" %in% installed.packages() """)
 
-    nothing
+    return nothing
 end
 
 function _set_lmer(s)
-    global LMER = s
+    return global LMER = s
 end
 
 function _set_afex_installed(s)
-    global AFEX_INSTALLED = s
+    return global AFEX_INSTALLED = s
 end
-
 
 const MERCONTROL_OPTIONS = ["""optimizer="nloptwrap" """,
                             """calc.derivs=FALSE""",

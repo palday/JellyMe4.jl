@@ -38,7 +38,7 @@ import Tables: columntable, ColumnTable
 
 # # from R
 function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
-    data = nothing;
+    data = nothing
     # try
     #     data = rcopy(s[:frame]);
     # catch err
@@ -112,7 +112,7 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
         nAGQ = 1
     end
 
-    m = GeneralizedLinearMixedModel(f,columntable(data), family(), link(), wts=wts)
+    m = GeneralizedLinearMixedModel(f, columntable(data), family(), link(); wts=wts)
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     θ = rcopyarray(s[:theta])
     β = rcopyarray(s[:beta])
@@ -137,11 +137,12 @@ end
 rcopytype(::Type{RClass{:glmerMod}}, s::Ptr{S4Sxp}) = GeneralizedLinearMixedModel
 
 # from Julia
-function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}, DataFrame}) where T
+function sexp(::Type{RClass{:glmerMod}},
+              x::Tuple{GeneralizedLinearMixedModel{T},DataFrame}) where {T}
     m, tbl = x
     m.optsum.feval > 0 || throw(ArgumentError("Model must be fitted"))
 
-    distribution =  Distribution(m.resp)
+    distribution = Distribution(m.resp)
     family = urfamily = replace(string(distribution), Regex("{.*}") => "")
     # ["Bernoulli","Binomial","Gamma", "Poisson", "InverseGaussian"]
     # R families: binomial, gaussian, Gamma, inverse.gaussian, poisson
@@ -154,7 +155,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
         family = "binomial"
     elseif family == "Poisson"
         family = "poisson"
-    elseif family in ("Gamma","Gaussian","InverseGaussian")
+    elseif family in ("Gamma", "Gaussian", "InverseGaussian")
         throw(ArgumentError("GLMMs with dispersion parameters are known to give incorrect results in MixedModels.jl (see PR#291), aborting."))
     else
         throw(ArgumentError("Family $family is not supported"))
@@ -181,7 +182,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     if urfamily == "Bernoulli"
         lhs = m.formula.lhs
         # should we check for PooledArray? brings in another dependency...
-        if !(jellyme4_data[!,lhs.sym] isa CategoricalArray)
+        if !(jellyme4_data[!, lhs.sym] isa CategoricalArray)
             @warn "Response was not categorical, converting in place"
             categorical!(jellyme4_data, [lhs.sym])
         end
@@ -197,7 +198,7 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     conv = m.optsum.returnvalue == :SUCCESS ? 0 : 1
     optimizer = String(m.optsum.optimizer)
     message = "fit with MixedModels.jl"
-    rsteps = 1;
+    rsteps = 1
 
     betastart = nAGQ > 0 ? "fixef=jellyme4_beta, " : ""
 
@@ -227,21 +228,24 @@ function sexp(::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}
     @debug r
     @warn """Some accuracy is lost in translation for GLMMs. This is fine with plotting, but proceed with caution for inferences.
              You can try letting the model "reconverge" in lme4 with
-                 update(model, control=glmerControl(optimizer="nloptwrap", calc.derivs=FALSE)).""" maxlog=1
-    @info "lme4 handles deviance for GLMMs differently than MixedModels.jl" maxlog=1
-    @info "for the correct comparison, examine -2*logLik(RModel) and deviance(JuliaModel)" maxlog=1
+                 update(model, control=glmerControl(optimizer="nloptwrap", calc.derivs=FALSE)).""" maxlog = 1
+    @info "lme4 handles deviance for GLMMs differently than MixedModels.jl" maxlog = 1
+    @info "for the correct comparison, examine -2*logLik(RModel) and deviance(JuliaModel)" maxlog = 1
     r = reval(r)
     r = protect(sexp(r))
     unprotect(1)
-    r
+    return r
 end
 
-sexpclass(x::Tuple{GeneralizedLinearMixedModel{T}, DataFrame}) where T = RClass{:glmerMod}
+sexpclass(x::Tuple{GeneralizedLinearMixedModel{T},DataFrame}) where {T} = RClass{:glmerMod}
 
 # generalize to ColumnTable, which is what MixedModels actually requires
-function sexp(ss::Type{RClass{:glmerMod}}, x::Tuple{GeneralizedLinearMixedModel{T}, ColumnTable}) where T
-    m, t  = x
-    sexp(ss, (m, DataFrame(t)))
+function sexp(ss::Type{RClass{:glmerMod}},
+              x::Tuple{GeneralizedLinearMixedModel{T},ColumnTable}) where {T}
+    m, t = x
+    return sexp(ss, (m, DataFrame(t)))
 end
 
-sexpclass(x::Tuple{GeneralizedLinearMixedModel{T}, ColumnTable}) where T = RClass{:glmerMod}
+function sexpclass(x::Tuple{GeneralizedLinearMixedModel{T},ColumnTable}) where {T}
+    return RClass{:glmerMod}
+end
