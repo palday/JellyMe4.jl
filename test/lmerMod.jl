@@ -266,4 +266,19 @@ const GLMM = GeneralizedLinearMixedModel
 
         end
     end
+
+    @testset "lmerControl warnings" begin
+        slp = DataFrame(MixedModels.dataset("sleepstudy"))
+        slp[!, :obs] .= 1:nrow(slp)
+        fm1 = fit(MixedModel,
+                  @formula(reaction ~ 1 + days + (1|obs)),
+                  slp;
+                  contrasts=Dict(:obs =>  Grouping()))
+       rfm1 = (fm1, slp)
+       warning = r"""Warning: number of levels of each grouping factor must be < number of observations \(problems: obs\)
+                     Warning: number of observations \(=180\) <= number of random effects \(=180\) for term \(1 \| obs\); the random-effects parameters and the residual variance \(or scale parameter\) are probably unidentifiable
+                     Warning: number of observations \(=180\) <= rank\(Z\) \(=180\); the random-effects parameters and the residual variance \(or scale parameter\) are probably unidentifiable
+                     """
+       @test_logs (:warn, warning) @rput rfm1;
+    end
 end

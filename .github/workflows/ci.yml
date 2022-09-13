@@ -1,15 +1,18 @@
 name: CI
+concurrency:
+  group: ${{ github.head_ref }}.ci
+  cancel-in-progress: true
 on:
   push:
       paths-ignore:
         - 'README.md'
       branches:
-        - master
+        - main
   pull_request:
       paths-ignore:
         - 'README.md'
       branches:
-        - master
+        - main
 jobs:
   test:
     name: Julia ${{ matrix.version }} - R ${{ matrix.R }}- ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
