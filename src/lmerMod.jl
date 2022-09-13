@@ -110,11 +110,9 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T}, DataFrame}
     jellyme4_mod <- $LMER(formula = $(formula),
                            data=jellyme4_data,
                            REML=$(REML),
-                           control=lme4::lmerControl(optimizer="nloptwrap",
-                                                     optCtrl=list(maxeval=$(rsteps)),
-                                    calc.derivs=FALSE,
-                                    check.nobs.vs.nRE= "warning"),
-                            start=list(theta=jellyme4_theta))
+                           control=lme4::lmerControl(optCtrl=list(maxeval=$(rsteps)),
+                                                     $(join(MERCONTROL_OPTIONS,","))),
+                           start=list(theta=jellyme4_theta))
      jellyme4_mod@optinfo\$feval <- $(feval)
      jellyme4_mod@optinfo\$message <- "$(message)"
      jellyme4_mod@optinfo\$optimizer <- "$(optimizer)"
