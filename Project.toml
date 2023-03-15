@@ -25,7 +25,7 @@ MixedModels = "3.0, 4.0"
 RCall = "0.13"
 RegressionFormulae = "0.1"
 StatsBase = "0.31, 0.32, 0.33"
-StatsModels = "0.6.8"
+StatsModels = "0.6.8, 0.7"
 Tables = "0.2, 1.0"
 julia = "1.6"
 
