@@ -132,7 +132,7 @@ logistic(x) = 1 / (1 + exp(-x))
                 # we max out at 1 scalar RE for the nAGQ tests
                 jlmm = GLMM(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
                             dat, Bernoulli())
-                fit!(jlmm; fast=false, nAGQ=9)
+                fit!(jlmm; fast=false, nAGQ=9, progress=false)
                 jm = (jlmm, dat)
                 @rput jm
                 # @test_warn Regex(".*categorical.*") @rput jm;
@@ -147,7 +147,7 @@ logistic(x) = 1 / (1 + exp(-x))
                 # we max out at 1 scalar RE for the nAGQ tests
                 jlmm = GLMM(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
                             dat, Bernoulli())
-                fit!(jlmm)
+                fit!(jlmm; progress=false)
                 jm = Tuple([jlmm, dat])
                 @rput jm
 
@@ -159,7 +159,7 @@ logistic(x) = 1 / (1 + exp(-x))
             @testset "columntable" begin
                 jlmm = GLMM(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
                             dat, Bernoulli())
-                fit!(jlmm)
+                fit!(jlmm; progress=false)
                 jm = Tuple([jlmm, columntable(dat)])
                 @rput jm
             end
@@ -170,7 +170,7 @@ logistic(x) = 1 / (1 + exp(-x))
             dat = dataset(:cbpp)
             dat.rate = dat.incid ./ dat.hsz
             jlmm = fit(MixedModel, @formula(rate ~ 1 + period + (1 | herd)),
-                       dat, Binomial(); wts=float(dat.hsz), fast=true)
+                       dat, Binomial(); wts=float(dat.hsz), fast=true, progress=false)
 
             jm = (jlmm, dat)
             @rput jm
@@ -192,7 +192,7 @@ logistic(x) = 1 / (1 + exp(-x))
                         dat, Poisson())
 
             jm = (jlmm, dat)
-            fit!(jlmm; fast=true) # problems with this one in fast=false
+            fit!(jlmm; fast=true, progress=false) # problems with this one in fast=false
             @rput jm
             # @test_warn Regex(".*categorical.*") @rput jm;
             @test rcopy(R"""jm@devcomp$dims["nAGQ"]""") == 0
@@ -228,7 +228,7 @@ logistic(x) = 1 / (1 + exp(-x))
             jlmm = fit(MixedModel,
                        @formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj) +
                                      (1 | item)),
-                       dat, Bernoulli();
+                       dat, Bernoulli(); progress=false,
                        contrasts=Dict(:gender => EffectsCoding(),
                                       :btypes => EffectsCoding()))
             jm = (jlmm, dat)

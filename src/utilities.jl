@@ -41,16 +41,30 @@ function get_r_contrasts(rdf)
     data = rcopy(rdf)
     # get categorical columns
     cnames = [c for c in propertynames(data) if typeof(data[!, c]) <: CategoricalArray]
-    return Dict(c => HypothesisCoding(pinv(rcopy(R"contrasts($(rdf[c]))"));
-                                      labels=rcopyarray(R"colnames(contrasts($(rdf[c])))"))
-                for c in cnames)
+    pairs = []
+    for c in cnames
+        @debug "" c
+        levels = rcopyarray(R"rownames(contrasts($(rdf[c])))")
+        @debug "" levels
+        if levels == [nothing]
+            # for some contrasts, the rownames aren't defined
+            # we don't prefer this method because it's possible
+            # that it's not quite right when people are using really
+            # fancy contrasts and it can fail
+            levels = rcopyarray(R"levels($(rdf[c]))")
+        end
+        labels = rcopyarray(R"colnames(contrasts($(rdf[c])))")
+        @debug "" labels
+        push!(pairs,
+              c => HypothesisCoding(pinv(rcopy(R"contrasts($(rdf[c]))")); levels, labels))
+    end
+    return Dict(pairs)
 end
 
 """
 set the contrasts on an R dataframe
 this of course has a side effect: it changes the R dataframe
 """
-
 function set_r_contrasts!(rdfname, formula)
     fixefform = first(formula.rhs)
 

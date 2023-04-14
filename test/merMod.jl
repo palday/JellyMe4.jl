@@ -6,9 +6,9 @@ const GLMM = GeneralizedLinearMixedModel
 @testset "merMod" begin
     # this is available in MixedModels.dataset(:sleepstudy) but with different
     # capitalization than in R
-    sleepstudy = rcopy(R"sleepstudy")
+    sleepstudy = rcopy(R"lme4::sleepstudy")
     jlmm = fit!(LMM(@formula(Reaction ~ 1 + round(Days) + (1 | Subject)), sleepstudy);
-                REML=false)
+                REML=false, progress=false)
     @testset "bare model" begin
         @test_throws ArgumentError (@rput jlmm)
     end
