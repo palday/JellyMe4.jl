@@ -203,7 +203,8 @@ const GLMM = GeneralizedLinearMixedModel
             cake
             """))
             jlmm = fit(MixedModel, @formula(angle ~ recipe * temperature + (1 | rr)),
-                       cake; REML=false, progress=false, contrasts=Dict(:temperature => SeqDiffCoding()))
+                       cake; REML=false, progress=false,
+                       contrasts=Dict(:temperature => SeqDiffCoding()))
             jm = (jlmm, cake)
             @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")

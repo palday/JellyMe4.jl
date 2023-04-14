@@ -55,7 +55,8 @@ function get_r_contrasts(rdf)
         end
         labels = rcopyarray(R"colnames(contrasts($(rdf[c])))")
         @debug "" labels
-        push!(pairs, c => HypothesisCoding(pinv(rcopy(R"contrasts($(rdf[c]))")); levels, labels))
+        push!(pairs,
+              c => HypothesisCoding(pinv(rcopy(R"contrasts($(rdf[c]))")); levels, labels))
     end
     return Dict(pairs)
 end
