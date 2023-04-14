@@ -1,9 +1,10 @@
-using RCall, MixedModels, Test
+using RCall, JellyMe4, MixedModels, Test
 using StatsBase: zscore
 using StatsModels: SeqDiffCoding
 using Tables: columntable
 
-import JellyMe4: _set_lmer, _set_afex_installed
+using JellyMe4: _set_lmer, _set_afex_installed
+using MixedModels: dataset
 
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
@@ -25,7 +26,7 @@ const GLMM = GeneralizedLinearMixedModel
 
     # this is available in MixedModels.dataset(:sleepstudy) but with different
     # capitalization than in R
-    sleepstudy = rcopy(R"sleepstudy")
+    sleepstudy = rcopy(R"lme4::sleepstudy")
 
     kb07 = dataset(:kb07)
 
@@ -33,8 +34,8 @@ const GLMM = GeneralizedLinearMixedModel
         ### from R ###
 
         jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days | Subject)), sleepstudy);
-                    REML=false)
-        rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
+                    REML=false, progress=false)
+        rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),lme4::sleepstudy,REML=FALSE)")
 
         @test jlmm.θ ≈ rlmm.θ atol = 0.001
         @test objective(jlmm) ≈ objective(rlmm) atol = 0.001
@@ -91,7 +92,7 @@ const GLMM = GeneralizedLinearMixedModel
 
         @testset "contrasts" begin
             reval("""
-            data(cake)
+            cake <- lme4::cake
             cake\$rr <- with(cake, replicate:recipe)
             """)
             rlmm = rcopy(R"fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)")
@@ -103,7 +104,7 @@ const GLMM = GeneralizedLinearMixedModel
 
         @testset "caret" begin
             reval("""
-            data(cake)
+            cake <- lme4::cake
             cake\$rr <- with(cake, replicate:recipe)
             """)
             rlmm = rcopy(R"fm1 <- lme4::lmer(angle ~ (recipe + temperature)^2 + (1|rr), cake, REML= FALSE)")

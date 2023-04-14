@@ -119,7 +119,7 @@ function rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
 
     if length(θ) != length(m.θ)
         @error """You're probably using || in R with a categorical variable,
-                  whose translation is currently unsupported with MixedModels 3.0."""
+                  whose translation is currently unsupported with recent MixedModels releases"""
         throw(ArgumentError("Parameter vectors in R and Julia are different sizes."))
     end
 
