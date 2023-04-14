@@ -41,7 +41,7 @@ const GLMM = GeneralizedLinearMixedModel
         @test objective(jlmm) ≈ objective(rlmm) atol = 0.001
         @test fixef(jlmm) ≈ fixef(rlmm) atol = 0.001
 
-        jlmm = refit!(jlmm; REML=true)
+        jlmm = refit!(jlmm; REML=true, progress=false)
         rlmm = rcopy(R"update(m, REML=TRUE)")
 
         @test jlmm.θ ≈ rlmm.θ atol = 0.001
@@ -50,14 +50,14 @@ const GLMM = GeneralizedLinearMixedModel
 
         @testset "merModLmerTest" begin
             jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 + Days | Subject)),
-                            sleepstudy); REML=false)
+                            sleepstudy); REML=false, progress=false)
             rlmm = rcopy(R"m <- lmerTest::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
 
             @test jlmm.θ ≈ rlmm.θ atol = 0.001
             @test objective(jlmm) ≈ objective(rlmm) atol = 0.001
             @test fixef(jlmm) ≈ fixef(rlmm) atol = 0.001
 
-            jlmm = refit!(jlmm; REML=true)
+            jlmm = refit!(jlmm; REML=true, progress=false)
             rlmm = rcopy(R"update(m, REML=TRUE)")
 
             @test jlmm.θ ≈ rlmm.θ atol = 0.001
@@ -71,7 +71,7 @@ const GLMM = GeneralizedLinearMixedModel
         # the scalar-vector distinction for θ is missing in R
         @testset "scalar RE" begin
             jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + (1 | Subject)), sleepstudy);
-                        REML=false)
+                        REML=false, progress=false)
             rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1|Subject),sleepstudy,REML=FALSE)")
 
             @test jlmm.θ ≈ rlmm.θ atol = 0.001
@@ -131,7 +131,7 @@ const GLMM = GeneralizedLinearMixedModel
 
             rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days||Subject),sleepstudy,REML=FALSE)")
             jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days | Subject)),
-                            sleepstudy); REML=false)
+                            sleepstudy); REML=false, progress=false)
             # as a cheat for comparing the covariance matrices, we use PCA
             @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol = 0.05
         end
@@ -152,7 +152,7 @@ const GLMM = GeneralizedLinearMixedModel
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
         @test rcopy(R"REMLcrit(jm)") ≈ objective(jlmm)
 
-        refit!(jlmm; REML=false)
+        refit!(jlmm; REML=false, progress=false)
         jm = (jlmm, sleepstudy)
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
@@ -169,14 +169,14 @@ const GLMM = GeneralizedLinearMixedModel
             R"m <- lme4::lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
             jlmm = fit!(LMM(@formula(log10(Reaction) ~ 1 + log(Days2) +
                                                        (1 + log(Days2) | Subject)),
-                            sleepstudy); REML=false)
+                            sleepstudy); REML=false, progress=false)
             jm = (jlmm, sleepstudy)
             @rput jm
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
             @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
 
             jlmm = fit!(LMM(@formula(Reaction ~ 1 + round(Days) + (1 | Subject)),
-                            sleepstudy); REML=false)
+                            sleepstudy); REML=false, progress=false)
             jm = (jlmm, sleepstudy)
 
             @test_throws ArgumentError (@rput jm)
@@ -185,7 +185,7 @@ const GLMM = GeneralizedLinearMixedModel
         @testset "sorting by n BLUPs vs. n groups" begin
             jlmm = fit(LMM,
                        @formula(rt_trunc ~ 1 + (1 | subj) + (1 + load + prec + spkr | item)),
-                       kb07)
+                       kb07; progress=false)
             jm = (jlmm, kb07)
             @rput jm
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
@@ -203,7 +203,7 @@ const GLMM = GeneralizedLinearMixedModel
             cake
             """))
             jlmm = fit(MixedModel, @formula(angle ~ recipe * temperature + (1 | rr)),
-                       cake; REML=false, contrasts=Dict(:temperature => SeqDiffCoding()))
+                       cake; REML=false, progress=false, contrasts=Dict(:temperature => SeqDiffCoding()))
             jm = (jlmm, cake)
             @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
@@ -213,7 +213,7 @@ const GLMM = GeneralizedLinearMixedModel
             machines = rcopy(R"as.data.frame(nlme::Machines)")
             jlmm = fit(MixedModel,
                        @formula(score ~ 1 + Machine + (1 + fulldummy(Machine) | Worker)),
-                       machines)
+                       machines; progress=false)
             rlmm = (jlmm, machines)
             @rput rlmm
             rlmmrepca = rcopy(R"summary(rePCA(rlmm))$Worker$importance[3,]")
@@ -228,7 +228,7 @@ const GLMM = GeneralizedLinearMixedModel
                 _set_afex_installed(false)
 
                 jlmm = fit!(LMM(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days | Subject)),
-                                sleepstudy); REML=false)
+                                sleepstudy); REML=false, progress=false)
                 rlmm = (jlmm, sleepstudy)
                 @rput rlmm
                 @test rcopy(R"""!is(rlmm,"merModLmerTest")""")
@@ -242,7 +242,7 @@ const GLMM = GeneralizedLinearMixedModel
 
                 jlmm = fit(MixedModel,
                            @formula(score ~ 1 + Machine + zerocorr(0 + Machine | Worker)),
-                           machines)
+                           machines; progress=false)
 
                 @testset "afex pre-enabled" begin
                     _set_lmer("afex::lmer_alt")
@@ -280,7 +280,7 @@ const GLMM = GeneralizedLinearMixedModel
         slp[!, :obs] .= 1:nrow(slp)
         fm1 = fit(MixedModel,
                   @formula(reaction ~ 1 + days + (1 | obs)),
-                  slp;
+                  slp; progress=false,
                   contrasts=Dict(:obs => Grouping()))
         rfm1 = (fm1, slp)
         warning = r"""Warning: number of levels of each grouping factor must be < number of observations \(problems: obs\)
