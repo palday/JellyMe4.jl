@@ -24,7 +24,7 @@ jobs:
           # - '1.6'
           - '1'
         R:
-          - '4.0'
+          - '4'
         os:
           # - ubuntu-latest # linux currently doesn't work because of lib issues
           - macOS-latest
