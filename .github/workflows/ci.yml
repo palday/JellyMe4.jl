@@ -24,18 +24,18 @@ jobs:
           # - '1.6'
           - '1'
         R:
-          - '4.0'
+          - '4'
         os:
           # - ubuntu-latest # linux currently doesn't work because of lib issues
           - macOS-latest
-          - windows-latest
+          # - windows-latest # Windows compiles *everything* and takes far too long
         arch:
           - x64
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: R Setup
-        uses: r-lib/actions/setup-r@v1
+        uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.R }}
       - name: R Dependencies
