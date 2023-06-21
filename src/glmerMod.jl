@@ -162,7 +162,7 @@ function sexp(::Type{RClass{:glmerMod}},
     end
 
     urlink = string(Link(m.resp))
-    link = lowercase(replace(urlink, "Link()" => ""))
+    link = lowercase(replace(replace(urlink, "Link()" => ""), "GLM." => ""))
 
     link in ["logit", "probit", "cauchit",
              "log", "identity", "inverse", "sqrt",
