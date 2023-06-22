@@ -151,11 +151,11 @@ function sexp(::Type{RClass{:glmerMod}},
     # we construct this piece-by-piece because this keeps the warnings
     # and everything in sync
     supported = ("Bernoulli", "Binomial", "Poisson")
-    if distribution <: Union{Bernoulli, Binomial}
+    if distribution <: Union{Bernoulli,Binomial}
         family = "binomial"
     elseif distribution <: Poisson
         family = "poisson"
-    elseif distribution <: Union{Gamma, Gaussian, InverseGaussian}
+    elseif distribution <: Union{Gamma,Gaussian,InverseGaussian}
         throw(ArgumentError("GLMMs with dispersion parameters are known to give incorrect results in MixedModels.jl (see PR#291), aborting."))
     else
         throw(ArgumentError("Family $family is not supported"))
