@@ -235,5 +235,16 @@ logistic(x) = 1 / (1 + exp(-x))
             @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
         end
+        @testset "asinh transformation" begin
+            dat = dataset(:verbagg)
+
+            jlmm = fit(MixedModel,
+                       @formula(r2 ~ 1 + asinh(anger) + gender + btype + situ + (1 | subj) +
+                                     (1 | item)),
+                       dat, Bernoulli())
+            jm = (jlmm, dat)
+            @rput jm
+            @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
+        end
     end
 end
