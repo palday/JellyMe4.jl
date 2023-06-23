@@ -234,8 +234,8 @@ logistic(x) = 1 / (1 + exp(-x))
             jm = (jlmm, dat)
             @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
-
-          @testset "asinh transformation" begin
+        end
+        @testset "asinh transformation" begin
             dat = dataset(:verbagg)
 
             jlmm = fit(MixedModel,
