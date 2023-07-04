@@ -1,7 +1,7 @@
 name = "JellyMe4"
 uuid = "19ac8677-9a15-4623-9afd-84acc6165ce7"
 authors = ["Phillip Alday <me@phillipalday.com>"]
-version = "1.1.0"
+version = "1.1.1"
 
 [deps]
 CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
