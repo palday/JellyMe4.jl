@@ -184,7 +184,7 @@ function sexp(::Type{RClass{:glmerMod}},
         # should we check for PooledArray? brings in another dependency...
         if !(jellyme4_data[!, lhs.sym] isa CategoricalArray)
             @warn "Response was not categorical, converting in place"
-            categorical!(jellyme4_data, [lhs.sym])
+            categorical!(jellyme4_data, lhs.sym)
         end
     end
     formula = convert_julia_to_r(m.formula)
