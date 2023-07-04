@@ -25,4 +25,4 @@ function sexp(::Type{RClass{:merMod}}, x::Tuple{Union{DataFrame,ColumnTable},Mix
     throw(ArgumentError("The order in your Tuple is reversed. It should be (Model, Data)"))
 end
 
-sexpclass(x::Tuple{Union{DataFrame,ColumnTable},MixedModel})= RClass{:merMod}
+sexpclass(x::Tuple{Union{DataFrame,ColumnTable},MixedModel}) = RClass{:merMod}
