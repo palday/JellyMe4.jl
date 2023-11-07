@@ -141,7 +141,7 @@ const GLMM = GeneralizedLinearMixedModel
             pastes = DataFrame(dataset(:pastes))
             @rput pastes
             jlmm = fit(MixedModel, @formula(strength ~ 1 + (1 | batch / cask)), pastes;
-                        REML=false, progress=false)
+                       REML=false, progress=false)
             rlmm = rcopy(R"lme4::lmer(strength ~ 1 + (1 | batch / cask), pastes,REML=FALSE)")
 
             @test jlmm.θ ≈ rlmm.θ atol = 0.001
@@ -292,7 +292,7 @@ const GLMM = GeneralizedLinearMixedModel
             pastes = DataFrame(dataset(:pastes))
             @rput pastes
             jlmm = fit(MixedModel, @formula(strength ~ 1 + (1 | batch / cask)), pastes;
-                        REML=false, progress=false)
+                       REML=false, progress=false)
             rlmm = (jlmm, pastes)
             @rput rlmm
 
@@ -300,7 +300,6 @@ const GLMM = GeneralizedLinearMixedModel
             @test objective(jlmm) ≈ rcopy(R"deviance(rlmm)") atol = 0.001
             @test only(fixef(jlmm)) ≈ rcopy(R"fixef(rlmm)") atol = 0.001
         end
-
     end
 
     @testset "lmerControl warnings" begin
