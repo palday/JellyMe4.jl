@@ -7,7 +7,7 @@ import RCall: rcopy,
 
 """
     fulldummy2dummy(lhs, grp, bar="|")
-    
+
 """
 function _fulldummy2dummy(lhs, grp, bar="|")
     terms = Vector{String}(undef, length(lhs.terms))
@@ -64,7 +64,7 @@ function convert_julia_to_r(f::StatsModels.FormulaTerm)::AbstractString
             end
 
         elseif trm isa MixedModels.RandomEffectsTerm
-            rhs[idx] = _fulldummy2dummy(trm.lhs, trm.rhs.sym)
+            rhs[idx] = _fulldummy2dummy(trm.lhs, string(trm.rhs))
         else
             rhs[idx] = string(trm)
         end

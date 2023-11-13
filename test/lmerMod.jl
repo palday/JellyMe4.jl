@@ -5,6 +5,7 @@ using Tables: columntable
 
 using JellyMe4: _set_lmer, _set_afex_installed
 using MixedModels: dataset
+using DataFrames
 
 const LMM = LinearMixedModel
 const GLMM = GeneralizedLinearMixedModel
@@ -134,6 +135,18 @@ const GLMM = GeneralizedLinearMixedModel
                             sleepstudy); REML=false, progress=false)
             # as a cheat for comparing the covariance matrices, we use PCA
             @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol = 0.05
+        end
+
+        @testset "nested grouping" begin
+            pastes = DataFrame(dataset(:pastes))
+            @rput pastes
+            jlmm = fit(MixedModel, @formula(strength ~ 1 + (1 | batch / cask)), pastes;
+                       REML=false, progress=false)
+            rlmm = rcopy(R"lme4::lmer(strength ~ 1 + (1 | batch / cask), pastes,REML=FALSE)")
+
+            @test jlmm.θ ≈ rlmm.θ atol = 0.001
+            @test objective(jlmm) ≈ objective(rlmm) atol = 0.001
+            @test fixef(jlmm) ≈ fixef(rlmm) atol = 0.001
         end
 
         @testset "dummy" begin
@@ -273,6 +286,19 @@ const GLMM = GeneralizedLinearMixedModel
                     @test_throws ArgumentError @rput rlmm
                 end
             end
+        end
+
+        @testset "nested grouping" begin
+            pastes = DataFrame(dataset(:pastes))
+            @rput pastes
+            jlmm = fit(MixedModel, @formula(strength ~ 1 + (1 | batch / cask)), pastes;
+                       REML=false, progress=false)
+            rlmm = (jlmm, pastes)
+            @rput rlmm
+
+            @test jlmm.θ ≈ rcopy(R"""getME(rlmm, "theta")""") atol = 0.001
+            @test objective(jlmm) ≈ rcopy(R"deviance(rlmm)") atol = 0.001
+            @test only(fixef(jlmm)) ≈ rcopy(R"fixef(rlmm)") atol = 0.001
         end
     end
 
