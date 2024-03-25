@@ -55,6 +55,7 @@ jobs:
         uses: julia-actions/julia-runtest@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: julia-actions/julia-processcoverage@v1
       - name: Coverage
         uses: codecov/codecov-action@v4
         with:
