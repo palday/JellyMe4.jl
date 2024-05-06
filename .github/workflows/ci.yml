@@ -15,7 +15,7 @@ on:
         - main
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - R ${{ matrix.R }}- ${{ matrix.os }} - ${{ matrix.arch }}
+    name: Julia ${{ matrix.version }} - R ${{ matrix.R }}- ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -29,8 +29,6 @@ jobs:
           # - ubuntu-latest # linux currently doesn't work because of lib issues
           - macOS-latest
           # - windows-latest # Windows compiles *everything* and takes far too long
-        arch:
-          - x64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +42,6 @@ jobs:
         uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
       - name: Cache
         uses: julia-actions/cache@v2
         with:
