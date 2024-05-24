@@ -5,7 +5,7 @@
 -->
 
 [![Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows.](https://www.repostatus.org/badges/latest/inactive.svg)](https://www.repostatus.org/#inactive)
-[![Test Status](https://github.com/palday/JellyMe4.jl/workflows/CI/badge.svg)](https://github.com/palday/JellyMe4.jl/actions)
+[![Test Status](https://github.com/palday/JellyMe4.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/palday/JellyMe4.jl/actions)
 [![Codecov](https://codecov.io/gh/palday/JellyMe4.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/palday/JellyMe4.jl)
 [![DOI](https://zenodo.org/badge/240243868.svg)](https://zenodo.org/badge/latestdoi/240243868)
 [![Code Style: YAS](https://img.shields.io/badge/code%20style-yas-1fdcb2.svg)](https://github.com/jrevels/YASGuide)
