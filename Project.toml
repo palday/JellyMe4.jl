@@ -1,7 +1,7 @@
 name = "JellyMe4"
 uuid = "19ac8677-9a15-4623-9afd-84acc6165ce7"
 authors = ["Phillip Alday <me@phillipalday.com>"]
-version = "1.2.1"
+version = "1.2.2"
 
 [deps]
 CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
@@ -18,7 +18,7 @@ Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
 Aqua = "0.7"
-CategoricalArrays = "0.10"
+CategoricalArrays = "0.8, 0.9, 0.10"
 DataFrames = "1"
 Distributions = "0.25"
 GLM = "1.3"
