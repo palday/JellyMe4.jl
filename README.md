@@ -204,7 +204,9 @@ This is expected because we don't allow optimization to stop naturally when movi
 
 ## Running JellyMe4 from .Rmd / R / R-JuliaCall
 
-If you need to run JellyMe4 from R, `@rput` will not work and you rather have to get the model back to R via `jm1 <- julia_eval("robject(:lmerMod, Tuple([m, machines]));",need_return="R")`
+If you need to run JellyMe4 from R (via JuliaCall), the convenience macro`@rput` will not work. Instead you have to invoke `robject` directly: 
+```R
+julia_eval("robject(:lmerMod, (m, machines);", need_return="R")
 
 ## Limitations and warnings
 
