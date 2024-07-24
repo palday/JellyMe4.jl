@@ -207,7 +207,7 @@ This is expected because we don't allow optimization to stop naturally when movi
 If you need to run JellyMe4 from R (via JuliaCall), the convenience macro`@rput` will not work. Instead you have to invoke `robject` directly: 
 ```R
 julia_eval("robject(:lmerMod, (m, machines);", need_return="R")
-
+```
 ## Limitations and warnings
 
 This is alpha software. It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. The testuite only tests against a single version of R and the current version of lme4. In other words, even for the parts that do work for me, they may not work for you.
