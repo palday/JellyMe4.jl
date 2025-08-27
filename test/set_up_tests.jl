@@ -4,6 +4,7 @@ using GLM
 using JellyMe4
 using MixedModels
 using RCall
+using Suppressor
 using Test
 
 using GLM: Link
