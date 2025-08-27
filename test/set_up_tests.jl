@@ -6,6 +6,7 @@ using MixedModels
 using RCall
 using Suppressor
 using Test
+using TestSetExtensions
 
 using GLM: Link
 using JellyMe4: _set_lmer, _set_afex_installed
@@ -18,6 +19,7 @@ const GLMM = GeneralizedLinearMixedModel
 const LMM = LinearMixedModel
 
 dataset(x) = DataFrame(MixedModelsDatasets.dataset(x))
+logistic(x) = 1 / (1 + exp(-x))
 
 # this should only occur on CIs
 # the Linux CI installs lme4 via apt beforehand
@@ -38,6 +40,3 @@ if(!require(afex)){
     install.packages("afex",repos="https://cloud.r-project.org", libs=lib, , type="binary")
 }
 """)
-
-
-logistic(x) = 1 / (1 + exp(-x))

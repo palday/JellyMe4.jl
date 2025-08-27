@@ -1,4 +1,4 @@
-@testset "merMod" begin
+@testset ExtendedTestSet "merMod" begin
     # this is available in MixedModels.dataset(:sleepstudy) but with different
     # capitalization than in R
     sleepstudy = rcopy(R"lme4::sleepstudy")
