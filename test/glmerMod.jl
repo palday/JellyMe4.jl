@@ -166,7 +166,7 @@
             dat.ch = center(dat.height)
             jlmm = glmm(@formula(ticks ~ 1 + year + ch + (1 | index) + (1 | brood) +
                                          (1 | location)),
-                        dat, Poisson(); fast=true, progress=false) # problems with this one in fast=false
+                        dat, Poisson(); fast=false, progress=false)
             jm = (jlmm, dat)
             # XXX REvalError: Error in is.nloptr(ret) : at least one element in x0 < lb
             @suppress @rput jm
