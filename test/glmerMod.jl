@@ -1,13 +1,3 @@
-using RCall, MixedModels, Test
-using StatsBase: zscore
-using Tables: columntable
-using GLM
-import GLM: Link
-const LMM = LinearMixedModel
-const GLMM = GeneralizedLinearMixedModel
-
-logistic(x) = 1 / (1 + exp(-x))
-
 @testset "glmerMod" begin
     reval("""
     if(!("lme4" %in% installed.packages())){

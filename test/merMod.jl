@@ -1,8 +1,3 @@
-using RCall, MixedModels, Test
-using StatsBase: zscore
-const LMM = LinearMixedModel
-const GLMM = GeneralizedLinearMixedModel
-
 @testset "merMod" begin
     # this is available in MixedModels.dataset(:sleepstudy) but with different
     # capitalization than in R

@@ -1,14 +1,3 @@
-using RCall, JellyMe4, MixedModels, Test
-using StatsBase: zscore
-using StatsModels: SeqDiffCoding
-using Tables: columntable
-
-using JellyMe4: _set_lmer, _set_afex_installed
-using DataFrames
-
-const LMM = LinearMixedModel
-const GLMM = GeneralizedLinearMixedModel
-
 @testset "lmerMod" begin
     reval("""
     if(!("lme4" %in% installed.packages())){
