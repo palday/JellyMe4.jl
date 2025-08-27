@@ -5,8 +5,8 @@ using DataFrames
 using MixedModels
 using Test
 
-const datasets = MixedModels.datasets
-dataset(x) = DataFrame(MixedModels.dataset(x))
+using MixedModelsDatasets: MixedModelsDatasets, datasets
+dataset(x) = DataFrame(MixedModelsDatasets.dataset(x))
 
 # this should only occur on CIs
 # the Linux CI installs lme4 via apt beforehand

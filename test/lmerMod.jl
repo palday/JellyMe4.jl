@@ -4,7 +4,6 @@ using StatsModels: SeqDiffCoding
 using Tables: columntable
 
 using JellyMe4: _set_lmer, _set_afex_installed
-using MixedModels: dataset
 using DataFrames
 
 const LMM = LinearMixedModel
