@@ -9,7 +9,7 @@
         ### from R ###
 
         jlmm = lmm(@formula(Reaction ~ 1 + Days + (1 + Days | Subject)), sleepstudy;
-                    REML=false, progress=false)
+                   REML=false, progress=false)
         rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),lme4::sleepstudy,REML=FALSE)")
 
         @test jlmm.θ ≈ rlmm.θ atol = 0.001
@@ -25,7 +25,7 @@
 
         @testset "merModLmerTest" begin
             jlmm = lmm(@formula(Reaction ~ 1 + Days + (1 + Days | Subject)),
-                            sleepstudy; REML=false, progress=false)
+                       sleepstudy; REML=false, progress=false)
             rlmm = rcopy(R"m <- lmerTest::lmer(Reaction ~ 1 + Days + (1 + Days|Subject),sleepstudy,REML=FALSE)")
 
             @test jlmm.θ ≈ rlmm.θ atol = 0.001
@@ -46,7 +46,7 @@
         # the scalar-vector distinction for θ is missing in R
         @testset "scalar RE" begin
             jlmm = lmm(@formula(Reaction ~ 1 + Days + (1 | Subject)), sleepstudy;
-                        REML=false, progress=false)
+                       REML=false, progress=false)
             rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1|Subject),sleepstudy,REML=FALSE)")
 
             @test jlmm.θ ≈ rlmm.θ atol = 0.001
@@ -107,7 +107,7 @@
 
             rlmm = rcopy(R"m <- lme4::lmer(Reaction ~ 1 + Days + (1 + Days||Subject),sleepstudy,REML=FALSE)")
             jlmm = lmm(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days | Subject)),
-                            sleepstudy; REML=false, progress=false)
+                       sleepstudy; REML=false, progress=false)
             # as a cheat for comparing the covariance matrices, we use PCA
             @test only(rlmm.rePCA) ≈ only(jlmm.rePCA) atol = 0.05
         end
@@ -131,7 +131,8 @@
 
     @testset "put lmerMod" begin
         ### from Julia ###
-        jlmm = LinearMixedModel(@formula(Reaction ~ 1 + Days + (1 + Days | Subject)), sleepstudy)
+        jlmm = LinearMixedModel(@formula(Reaction ~ 1 + Days + (1 + Days | Subject)),
+                                sleepstudy)
         jm = (jlmm, sleepstudy)
         # unfitted model
         @test_throws ArgumentError @rput(jm)
@@ -157,9 +158,10 @@
             sleepstudy[!, :Days2] = sleepstudy.Days .+ 1
             @rput sleepstudy
             R"m <- lme4::lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
-            jlmm = lmm(@formula(log10(Reaction) ~ 1 + log(Days2) +
-                                                       (1 + log(Days2) | Subject)),
-                            sleepstudy; REML=false, progress=false)
+            jlmm = lmm(@formula(log10(Reaction) ~
+                                1 + log(Days2) +
+                                (1 + log(Days2) | Subject)),
+                       sleepstudy; REML=false, progress=false)
             jm = (jlmm, sleepstudy)
             # MAXEVAL
             @rput jm
@@ -167,7 +169,7 @@
             @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
 
             jlmm = lmm(@formula(Reaction ~ 1 + round(Days) + (1 | Subject)),
-                            sleepstudy; REML=false, progress=false)
+                       sleepstudy; REML=false, progress=false)
             jm = (jlmm, sleepstudy)
 
             @test_throws ArgumentError @rput(jm)
@@ -221,7 +223,7 @@
                 _set_afex_installed(false)
 
                 jlmm = lmm(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days | Subject)),
-                                sleepstudy; REML=false, progress=false)
+                           sleepstudy; REML=false, progress=false)
                 rlmm = (jlmm, sleepstudy)
                 # MAXEVAL
                 @rput rlmm

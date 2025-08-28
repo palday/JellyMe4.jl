@@ -97,7 +97,9 @@
 
             @testset "unfitted model" begin
                 # we max out at 1 scalar RE for the nAGQ tests
-                jlmm = GeneralizedLinearMixedModel(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
+                jlmm = GeneralizedLinearMixedModel(@formula(r2 ~
+                                                            1 + anger + gender + btype +
+                                                            situ + (1 | subj)),
                                                    dat, Bernoulli())
                 jm = (jlmm, dat)
                 # unfitted model
@@ -146,7 +148,7 @@
             dat = dataset(:cbpp)
             dat.rate = dat.incid ./ dat.hsz
             jlmm = glmm(@formula(rate ~ 1 + period + (1 | herd)),
-                       dat, Binomial(); wts=float(dat.hsz), fast=true, progress=false)
+                        dat, Binomial(); wts=float(dat.hsz), fast=true, progress=false)
 
             jm = (jlmm, dat)
             # MAXEVAL
@@ -199,11 +201,12 @@
         @testset "contrasts" begin
             dat = dataset(:verbagg)
 
-            jlmm = glmm(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj) +
-                                     (1 | item)),
-                       dat, Bernoulli(); progress=false,
-                       contrasts=Dict(:gender => EffectsCoding(),
-                                      :btypes => EffectsCoding()))
+            jlmm = glmm(@formula(r2 ~
+                                 1 + anger + gender + btype + situ + (1 | subj) +
+                                 (1 | item)),
+                        dat, Bernoulli(); progress=false,
+                        contrasts=Dict(:gender => EffectsCoding(),
+                                       :btypes => EffectsCoding()))
             jm = (jlmm, dat)
             @suppress @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)") atol=0.001
@@ -211,9 +214,10 @@
         @testset "asinh transformation" begin
             dat = dataset(:verbagg)
 
-            jlmm = glmm(@formula(r2 ~ 1 + asinh(anger) + gender + btype + situ + (1 | subj) +
-                                     (1 | item)),
-                       dat, Bernoulli(); fast=true, progress=false)
+            jlmm = glmm(@formula(r2 ~
+                                 1 + asinh(anger) + gender + btype + situ + (1 | subj) +
+                                 (1 | item)),
+                        dat, Bernoulli(); fast=true, progress=false)
             jm = (jlmm, dat)
             # MAXEVAL
             @suppress @rput jm
