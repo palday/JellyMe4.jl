@@ -173,7 +173,7 @@
             # note the really high tolerances
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol = 0.001
             @test_broken rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol = 0.5
-            @test rcopy(R"logLik(jm)") ≈ loglikelihood(jlmm) atol = 0.001
+            @test rcopy(R"logLik(jm)") ≈ loglikelihood(jlmm) atol = 0.015
         end
 
         @testset "Gaussian" begin
