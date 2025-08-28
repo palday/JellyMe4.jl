@@ -115,7 +115,7 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T},DataFrame})
                            start=list(theta=jellyme4_theta))
      jellyme4_mod@optinfo\$feval <- $(feval)
      jellyme4_mod@optinfo\$message <- "$(message)"
-     #jellyme4_mod@optinfo\$optimizer <- "$(optimizer)"
+     jellyme4_mod@optinfo\$optimizer <- "$(optimizer)"
      jellyme4_mod
     """
     r = reval(r)
