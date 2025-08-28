@@ -1,10 +1,3 @@
-import RCall: rcopy,
-              RObject,
-              LangSxp,
-              @rput,
-              @rget,
-              @R_str
-
 """
     fulldummy2dummy(lhs, grp, bar="|")
 

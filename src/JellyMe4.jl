@@ -1,20 +1,72 @@
 module JellyMe4
 
-using RCall
-using StatsModels
-using RegressionFormulae
-using MixedModels
+# if RCall is available, then so is DataFrames
+# so don't feel bad about this dependency
+using DataFrames: DataFrames,
+                  DataFrame,
+                  transform!
 
-export rcopy
-export rcopytype
-export sexp
-export sexpclass
+using CategoricalArrays: categorical,
+                         CategoricalArray
 
-# using Pkg.Artifacts
+using Distributions: Distribution,
+                     Bernoulli,
+                     Binomial,
+                     Gamma,
+                     Gaussian,
+                     InverseGaussian,
+                     Poisson
+using GLM: CauchitLink,
+           CloglogLink,
+           IdentityLink,
+           InverseLink,
+           Link,
+           LogitLink,
+           LogLink,
+           ProbitLink,
+           SqrtLink
 
-# function __init__()
-#     global TestData = artifact"TestData"
-# end
+using LinearAlgebra: pinv
+
+using MixedModels: MixedModels,
+                   MixedModel,
+                   getθ,
+                   GeneralizedLinearMixedModel,
+                   LinearMixedModel,
+                   nranef,
+                   pirls!,
+                   setβθ!,
+                   setθ!,
+                   updateL!
+
+using RCall: RCall,
+             @rget,
+             @rput,
+             @R_str,
+             LangSxp,
+             protect,
+             rcopy,
+             rcopytype,
+             reval,
+             RObject,
+             RClass,
+             S4Sxp,
+             sexp,
+             sexpclass,
+             unprotect
+
+using RegressionFormulae: RegressionFormulae
+
+using StatsModels: StatsModels,
+                   @formula,
+                   CategoricalTerm,
+                   coefnames,
+                   HypothesisCoding,
+                   InterceptTerm,
+                   InteractionTerm
+
+using Tables: columntable,
+              ColumnTable
 
 function __init__()
     # should we assume the user is smart enough?

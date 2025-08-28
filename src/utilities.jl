@@ -1,11 +1,3 @@
-using CategoricalArrays
-import LinearAlgebra: pinv
-using DataFrames
-using MixedModels: getθ, nranef
-import RCall: rcopy,
-              reval,
-              @R_str
-
 """
     categorical!(df::DataFrame, cols::Vector{Symbol})
     categorical!(df::DataFrame, col::Symbol)

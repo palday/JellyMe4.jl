@@ -1,27 +1,7 @@
-import MixedModels: LinearMixedModel,
-                    setθ!,
-                    updateL!
-import RCall: rcopy,
-              RClass,
-              rcopytype,
-              reval,
-              S4Sxp,
-              sexp,
-              protect,
-              unprotect,
-              sexpclass,
-              @rput,
-              @rget,
-              @R_str
-
-# if RCall is available, then so is DataFrames
-import DataFrames: DataFrame
-import Tables: ColumnTable
-
 # from R
 # note that weights are not extracted
 # TODO: document weights issue and warn
-function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
+function RCall.rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
 
     # these try blocks should probably be changed to an examination of the indices
     # this only extracts the name within the call, not the actual weights
@@ -73,15 +53,16 @@ function rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     return updateL!(setθ!(m, θ))
 end
 
-rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
+RCall.rcopytype(::Type{RClass{:lmerMod}}, s::Ptr{S4Sxp}) = LinearMixedModel
 
 # add lmerTest::lmer and afex::lmer_alt support
-rcopytype(::Type{RClass{:lmerModLmerTest}}, s::Ptr{S4Sxp}) = LinearMixedModel
+RCall.rcopytype(::Type{RClass{:lmerModLmerTest}}, s::Ptr{S4Sxp}) = LinearMixedModel
 
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
 #          SET_VECTOR_ELT() can only be applied to a 'list', not a 'character'
-function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
+function RCall.sexp(::Type{RClass{:lmerMod}},
+                    x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
     m, tbl = x
     if !isempty(m.sqrtwts)
         @error "weights are not currently supported"
@@ -124,20 +105,20 @@ function sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T},DataFrame})
     return r
 end
 
-function sexpclass(x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
+function RCall.sexpclass(x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
     return LMER in ("afex::lmer_alt", "lmer_alt") ? RClass{:lmerModLmerTest} :
            RClass{:lmerMod}
 end
-function sexp(::Type{RClass{:lmerModLmerTest}},
-              x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
+function RCall.sexp(::Type{RClass{:lmerModLmerTest}},
+                    x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
     return sexp(RClass{:lmerMod}, x)
 end
 
 # generalize to ColumnTable, which is what MixedModels actually requires
-function sexp(ss::Type{RClass{:lmerMod}},
-              x::Tuple{LinearMixedModel{T},ColumnTable}) where {T}
+function RCall.sexp(ss::Type{RClass{:lmerMod}},
+                    x::Tuple{LinearMixedModel{T},ColumnTable}) where {T}
     m, t = x
     return sexp(ss, (m, DataFrame(t)))
 end
 
-sexpclass(x::Tuple{LinearMixedModel{T},ColumnTable}) where {T} = RClass{:lmerMod}
+RCall.sexpclass(x::Tuple{LinearMixedModel{T},ColumnTable}) where {T} = RClass{:lmerMod}
