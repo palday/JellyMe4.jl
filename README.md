@@ -29,23 +29,26 @@ One of the difficulties in transitioning to a new programming language is not ju
 
 ## Installation
 
-`JellyMe4` is now registered in the Julia package registry and can be installed by
+`JellyMe4` is the Julia general registry and can be installed by
+
 ```julia
 julia> using Pkg
-julia> Pkg.add("JellyMe4")
 
+julia> Pkg.add("JellyMe4")
 ```
+
 or, in the pkg REPL,
+
 ```julia
-(@v1.4) pkg> add JellyMe4
+(@v1.10) pkg> add JellyMe4
 ```
 
 To get the latest pre-release features, you can install the development version:
 ```julia
-(@v1.4) pkg> add JellyMe4#master
+(@v1.10) pkg> add JellyMe4#main
 ```
 
-Generally speaking, the development version should work, but especially until version 1.0, there is no guarantee that there won't be breaking changes compared to the latest release.
+Generally speaking, the development version should work, but there is no guarantee that there won't be breaking changes compared to the latest release.
 
 ## Basic Usage
 
@@ -210,13 +213,15 @@ julia_eval("robject(:lmerMod, (m, machines);", need_return="R")
 ```
 ## Limitations and warnings
 
-This is alpha software. It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. The testuite only tests against a single version of R and the current version of lme4. In other words, even for the parts that do work for me, they may not work for you.
+This is hobby software for a use case that doesn't really apply to me anymore.
+It has some functionality that should work well for common use cases and even a testsuite, but this testsuite depends on two different software environments (R and Julia) and can afoul of all sorts of nasty version interactions. The testuite only tests against a single version of R and the current version of lme4. In other words, even for the parts that do work for me, they may not work for you.
 
 Parts of the API aren't as nice as I would like them to be (especially in the Julia to R direction) and may change if I figure out something nicer.
-This package generally follows the Julia community standard [SemVer](https://semver.org/).
-As this package has not yet hit 1.0, we follow these general conventions:
-  - Non-exported functions may change or disappear even with a patch release. Exported functions should otherwise only increase in functionality between patch versions; supporting additional syntax is not considered a breaking change. In other words, errors and exceptions disappearing as more conversions are supported is not breaking. Small improvements will be accompanied by a patch version bump.
-  - Large improvements and potentially breaking changes will be accompanied by a minor version bump.
+This package generally follows the Julia community standard [SemVer](https://semver.org/):
+
+- Non-exported functions may change or disappear even with a patch release. 
+- Exported functions should otherwise only increase in functionality between minor versions; supporting additional syntax is not considered a breaking change. In other words, errors and exceptions disappearing as more conversions are supported is not breaking. Small improvements will be accompanied by a minor version bump.
+- Large improvements and potentially breaking changes will be accompanied by a major. version bump.
 
 Only a subset of all the options available in `MixedModels` and `lme4` are supported. Unsupported things should break in an obvious way, but here's a list of things that are more commonly used but may break non obviously:
 - ~~**custom contrast coding**. If you really need this and you know what you're doing, then you can set up your own numeric variables representing appropriate contrasts, as numeric variables survive the transition without difficulty.~~ This should work if you're not doing anything weird with your interaction terms.
