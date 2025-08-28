@@ -1,97 +1,72 @@
 module JellyMe4
 
-using RCall
-using StatsModels
-using RegressionFormulae
-using MixedModels
+# if RCall is available, then so is DataFrames
+# so don't feel bad about this dependency
+using DataFrames: DataFrames,
+                  DataFrame,
+                  transform!
 
-import MixedModels: GeneralizedLinearMixedModel,
-                    pirls!,
-                    setβθ!,
-                    setθ!
-import Distributions: Distribution,
+using CategoricalArrays: categorical,
+                         CategoricalArray
+
+using Distributions: Distribution,
                       Bernoulli,
                       Binomial,
                       Gamma,
                       Gaussian,
                       InverseGaussian,
                       Poisson
+using GLM: CauchitLink,
+           CloglogLink,
+           IdentityLink,
+           InverseLink,
+           Link,
+           LogitLink,
+           LogLink,
+           ProbitLink,
+           SqrtLink
 
-import GLM: Link,
-            CauchitLink,
-            CloglogLink,
-            LogitLink,
-            IdentityLink,
-            InverseLink,
-            LogLink,
-            ProbitLink,
-            SqrtLink
+using LinearAlgebra: pinv
 
-import RCall: rcopy,
-              RClass,
-              rcopytype,
-              reval,
-              S4Sxp,
-              sexp,
-              protect,
-              unprotect,
-              sexpclass,
-              @rput,
-              @rget
-# if RCall is available, then so is DataFrames
-using DataFrames
-import CategoricalArrays: CategoricalArray
-import Tables: columntable, ColumnTable
+using MixedModels: MixedModels,
+                   MixedModel,
+                   getθ,
+                   GeneralizedLinearMixedModel,
+                   LinearMixedModel,
+                   nranef,
+                   pirls!,
+                   setβθ!,
+                   setθ!,
+                   updateL!
 
-import MixedModels: LinearMixedModel,
-                    setθ!,
-                    updateL!
-import RCall: rcopy,
-              RClass,
-              rcopytype,
-              reval,
-              S4Sxp,
-              sexp,
-              protect,
-              unprotect,
-              sexpclass,
-              @rput,
-              @rget,
-              @R_str
+using RCall: RCall,
+             @rget,
+             @rput,
+             @R_str,
+             LangSxp,
+             protect,
+             rcopy,
+             rcopytype,
+             reval,
+             RObject,
+             RClass,
+             S4Sxp,
+             sexp,
+             sexpclass,
+             unprotect
 
-# if RCall is available, then so is DataFrames
-import DataFrames: DataFrame
-import Tables: ColumnTable
+using RegressionFormulae: RegressionFormulae
 
-import RCall: rcopy,
-              RObject,
-              LangSxp,
-              @rput,
-              @rget,
-              @R_str
+using StatsModels: StatsModels,
+                   @formula,
+                   CategoricalTerm,
+                   coefnames,
+                   HypothesisCoding,
+                   InterceptTerm,
+                   InteractionTerm
 
-import MixedModels: MixedModel
-import Tables: ColumnTable
-import DataFrames: DataFrame
-import RCall: rcopy,
-              RClass,
-              rcopytype,
-              reval,
-              S4Sxp,
-              sexp,
-              protect,
-              unprotect,
-              sexpclass,
-              @rput,
-              @rget
-
-using CategoricalArrays
-import LinearAlgebra: pinv
-using DataFrames
-using MixedModels: getθ, nranef
-import RCall: rcopy,
-              reval,
-              @R_str
+using Tables: columntable,
+              ColumnTable
 
 function __init__()
     # should we assume the user is smart enough?
