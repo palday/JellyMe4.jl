@@ -61,7 +61,8 @@ RCall.rcopytype(::Type{RClass{:lmerModLmerTest}}, s::Ptr{S4Sxp}) = LinearMixedMo
 # TODO: fix some conversions -- Julia->R->Julia roundtrip currently due to
 #        ERROR: REvalError: Error in function (x, value, pos = -1, envir = as.environment(pos), inherits = FALSE,  :
 #          SET_VECTOR_ELT() can only be applied to a 'list', not a 'character'
-function RCall.sexp(::Type{RClass{:lmerMod}}, x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
+function RCall.sexp(::Type{RClass{:lmerMod}},
+                    x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
     m, tbl = x
     if !isempty(m.sqrtwts)
         @error "weights are not currently supported"
@@ -109,13 +110,13 @@ function RCall.sexpclass(x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
            RClass{:lmerMod}
 end
 function RCall.sexp(::Type{RClass{:lmerModLmerTest}},
-              x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
+                    x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
     return sexp(RClass{:lmerMod}, x)
 end
 
 # generalize to ColumnTable, which is what MixedModels actually requires
 function RCall.sexp(ss::Type{RClass{:lmerMod}},
-              x::Tuple{LinearMixedModel{T},ColumnTable}) where {T}
+                    x::Tuple{LinearMixedModel{T},ColumnTable}) where {T}
     m, t = x
     return sexp(ss, (m, DataFrame(t)))
 end

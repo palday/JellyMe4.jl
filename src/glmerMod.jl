@@ -100,7 +100,7 @@ RCall.rcopytype(::Type{RClass{:glmerMod}}, s::Ptr{S4Sxp}) = GeneralizedLinearMix
 
 # from Julia
 function RCall.sexp(::Type{RClass{:glmerMod}},
-              x::Tuple{GeneralizedLinearMixedModel{T},DataFrame}) where {T}
+                    x::Tuple{GeneralizedLinearMixedModel{T},DataFrame}) where {T}
     m, tbl = x
     m.optsum.feval > 0 || throw(ArgumentError("Model must be fitted"))
 
@@ -202,11 +202,13 @@ function RCall.sexp(::Type{RClass{:glmerMod}},
     return r
 end
 
-RCall.sexpclass(x::Tuple{GeneralizedLinearMixedModel{T},DataFrame}) where {T} = RClass{:glmerMod}
+function RCall.sexpclass(x::Tuple{GeneralizedLinearMixedModel{T},DataFrame}) where {T}
+    return RClass{:glmerMod}
+end
 
 # generalize to ColumnTable, which is what MixedModels actually requires
 function RCall.sexp(ss::Type{RClass{:glmerMod}},
-              x::Tuple{GeneralizedLinearMixedModel{T},ColumnTable}) where {T}
+                    x::Tuple{GeneralizedLinearMixedModel{T},ColumnTable}) where {T}
     m, t = x
     return sexp(ss, (m, DataFrame(t)))
 end

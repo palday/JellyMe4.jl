@@ -10,12 +10,12 @@ using CategoricalArrays: categorical,
                          CategoricalArray
 
 using Distributions: Distribution,
-                      Bernoulli,
-                      Binomial,
-                      Gamma,
-                      Gaussian,
-                      InverseGaussian,
-                      Poisson
+                     Bernoulli,
+                     Binomial,
+                     Gamma,
+                     Gaussian,
+                     InverseGaussian,
+                     Poisson
 using GLM: CauchitLink,
            CloglogLink,
            IdentityLink,
