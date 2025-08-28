@@ -37,8 +37,7 @@ function _set_afex_installed(s)
     return global AFEX_INSTALLED = s
 end
 
-const MERCONTROL_OPTIONS = ["""optimizer="nloptwrap" """,
-                            """calc.derivs=FALSE""",
+const MERCONTROL_OPTIONS = ["""calc.derivs=FALSE""",
                             """check.nobs.vs.rankZ = "warning" """,
                             """check.nobs.vs.nlev = "warning" """,
                             """check.nlev.gtreq.5 = "ignore" """,

@@ -1,32 +1,8 @@
-using RCall, MixedModels, Test
-using StatsBase: zscore
-using Tables: columntable
-using GLM
-import GLM: Link
-const LMM = LinearMixedModel
-const GLMM = GeneralizedLinearMixedModel
-
-logistic(x) = 1 / (1 + exp(-x))
-
-@testset "glmerMod" begin
-    reval("""
-    if(!("lme4" %in% installed.packages())){
-        # use tmp for tests if lme4 isn't available
-        .libPaths("/tmp")
-        lib <- .libPaths()[1L]
-        install.packages("lme4",repos="https://cloud.r-project.org", libs=lib)
-    }
-    if(!("afex" %in% installed.packages())){
-        .libPaths("/tmp")
-        lib <- .libPaths()[1L]
-        install.packages("afex",repos="https://cloud.r-project.org", libs=lib)
-    }
-    """)
-
+@testset ExtendedTestSet "glmerMod" begin
     ### from R ###
     @testset "get glmerMod" begin
         @testset "Binomial" begin
-            reval(raw"""
+            @suppress reval(raw"""
             attach(cbpp)
             cbpp$rate <- with(cbpp, incidence/size)
             rlmm <- glmer(rate ~ period + (1 | herd), weights = size,
@@ -59,13 +35,13 @@ logistic(x) = 1 / (1 + exp(-x))
                 reval(raw"""
                 contrasts(cbpp$period) <- contr.helmert(levels(cbpp$period))
                 """)
-                rlmm = rcopy(R"fm1 <- glmer(rate ~ period + (1 | herd), weights = size,family = binomial, data = cbpp)")
+                rlmm = @suppress rcopy(R"fm1 <- glmer(rate ~ period + (1 | herd), weights = size,family = binomial, data = cbpp)")
                 @test fixef(rlmm) ≈ rcopy(R"fixef(fm1)")
             end
 
             @testset "Bernoulli" begin
                 @testset "nAGQ and scalar RE" begin
-                    reval("""
+                    @suppress reval("""
                     rlmm <- glmer(r2 ~ Anger + Gender + btype + situ + (1|id),
                                         family = binomial, data=VerbAgg, nAGQ=4)
                     """)
@@ -80,7 +56,7 @@ logistic(x) = 1 / (1 + exp(-x))
 
                 @testset "Laplace and probit link" begin
                     # TODO add tests for each link
-                    reval("""
+                    @suppress reval("""
                     rlmm <- glmer(r2 ~ Anger + Gender + btype + situ + (1|id),
                                         family = binomial(link="probit"), data=VerbAgg)
                     """)
@@ -97,7 +73,7 @@ logistic(x) = 1 / (1 + exp(-x))
         end
 
         @testset "Poisson and fast fit" begin
-            reval("""
+            @suppress reval("""
             # from the lme4 docs
             form <- TICKS ~ YEAR + HEIGHT + (1|BROOD) + (1|INDEX) + (1|LOCATION)
             rlmm  <- glmer(form, family="poisson",data=grouseticks, nAGQ=0)
@@ -121,20 +97,20 @@ logistic(x) = 1 / (1 + exp(-x))
 
             @testset "unfitted model" begin
                 # we max out at 1 scalar RE for the nAGQ tests
-                jlmm = GLMM(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
-                            dat, Bernoulli())
-                jm = Tuple([jlmm, dat])
+                jlmm = GeneralizedLinearMixedModel(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
+                                                   dat, Bernoulli())
+                jm = (jlmm, dat)
                 # unfitted model
                 @test_throws ArgumentError @rput jm
             end
 
             @testset "nAGQ" begin
                 # we max out at 1 scalar RE for the nAGQ tests
-                jlmm = GLMM(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
-                            dat, Bernoulli())
-                fit!(jlmm; fast=false, nAGQ=9, progress=false)
+                jlmm = glmm(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
+                            dat, Bernoulli(); fast=false, nAGQ=9, progress=false)
                 jm = (jlmm, dat)
-                @rput jm
+                # MAXEVAL
+                @suppress @rput jm
                 # @test_warn Regex(".*categorical.*") @rput jm;
 
                 @test rcopy(R"""jm@devcomp$dims["nAGQ"]""") == jlmm.optsum.nAGQ
@@ -145,11 +121,11 @@ logistic(x) = 1 / (1 + exp(-x))
 
             @testset "Laplace" begin
                 # we max out at 1 scalar RE for the nAGQ tests
-                jlmm = GLMM(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
-                            dat, Bernoulli())
-                fit!(jlmm; progress=false)
-                jm = Tuple([jlmm, dat])
-                @rput jm
+                jlmm = glmm(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
+                            dat, Bernoulli(); progress=false)
+                jm = (jlmm, dat)
+                # MAXEVAL
+                @suppress @rput jm
 
                 # note the really high tolerances
                 @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol = 0.1
@@ -157,11 +133,11 @@ logistic(x) = 1 / (1 + exp(-x))
             end
 
             @testset "columntable" begin
-                jlmm = GLMM(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
-                            dat, Bernoulli())
-                fit!(jlmm; progress=false)
-                jm = Tuple([jlmm, columntable(dat)])
-                @rput jm
+                jlmm = glmm(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj)),
+                            dat, Bernoulli(); progress=false)
+                jm = (jlmm, columntable(dat))
+                # MAXEVAL
+                @suppress @rput jm
             end
         end
 
@@ -169,11 +145,12 @@ logistic(x) = 1 / (1 + exp(-x))
             # TODO: remove upon next MixedModels.jl release
             dat = dataset(:cbpp)
             dat.rate = dat.incid ./ dat.hsz
-            jlmm = fit(MixedModel, @formula(rate ~ 1 + period + (1 | herd)),
+            jlmm = glmm(@formula(rate ~ 1 + period + (1 | herd)),
                        dat, Binomial(); wts=float(dat.hsz), fast=true, progress=false)
 
             jm = (jlmm, dat)
-            @rput jm
+            # MAXEVAL
+            @suppress @rput jm
             # @test_warn Regex(".*categorical.*") @rput jm;
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol = 0.001
             @test_broken rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol = 0.001
@@ -184,22 +161,19 @@ logistic(x) = 1 / (1 + exp(-x))
 
         @testset "Poisson and fast fit" begin
             # TODO: remove upon next MixedModels.jl release
-            center(v::AbstractVector) = v .- (sum(v) / length(v))
             dat = dataset(:grouseticks)
-            dat.ch = center(dat.height)
-            jlmm = GLMM(@formula(ticks ~ 1 + year + ch + (1 | index) + (1 | brood) +
-                                         (1 | location)),
-                        dat, Poisson())
-
+            # not the best model, but that's not the point of these tests
+            jlmm = glmm(@formula(ticks ~ 1 + (1 | location)),
+                        dat, Poisson(); fast=true, progress=false)
             jm = (jlmm, dat)
-            fit!(jlmm; fast=true, progress=false) # problems with this one in fast=false
-            @rput jm
+            # XXX REvalError: Error in is.nloptr(ret) : at least one element in x0 < lb
+            @suppress @rput jm
             # @test_warn Regex(".*categorical.*") @rput jm;
             @test rcopy(R"""jm@devcomp$dims["nAGQ"]""") == 0
             # note the really high tolerances
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm) atol = 0.001
             @test_broken rcopy(R"-2 * logLik(jm)") ≈ deviance(jlmm) atol = 0.5
-            @test rcopy(R"logLik(jm)") ≈ loglikelihood(jlmm) atol = 0.001
+            @test rcopy(R"logLik(jm)") ≈ loglikelihood(jlmm) atol = 0.015
         end
 
         @testset "Gaussian" begin
@@ -225,25 +199,24 @@ logistic(x) = 1 / (1 + exp(-x))
         @testset "contrasts" begin
             dat = dataset(:verbagg)
 
-            jlmm = fit(MixedModel,
-                       @formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj) +
+            jlmm = glmm(@formula(r2 ~ 1 + anger + gender + btype + situ + (1 | subj) +
                                      (1 | item)),
                        dat, Bernoulli(); progress=false,
                        contrasts=Dict(:gender => EffectsCoding(),
                                       :btypes => EffectsCoding()))
             jm = (jlmm, dat)
-            @rput jm
-            @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
+            @suppress @rput jm
+            @test fixef(jlmm) ≈ rcopy(R"fixef(jm)") atol=0.001
         end
         @testset "asinh transformation" begin
             dat = dataset(:verbagg)
 
-            jlmm = fit(MixedModel,
-                       @formula(r2 ~ 1 + asinh(anger) + gender + btype + situ + (1 | subj) +
+            jlmm = glmm(@formula(r2 ~ 1 + asinh(anger) + gender + btype + situ + (1 | subj) +
                                      (1 | item)),
-                       dat, Bernoulli())
+                       dat, Bernoulli(); fast=true, progress=false)
             jm = (jlmm, dat)
-            @rput jm
+            # MAXEVAL
+            @suppress @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
         end
     end

@@ -72,7 +72,7 @@ function set_r_contrasts!(rdfname, formula)
         if typeof(tt) <: CategoricalTerm
             R"""
             jellyme_contrasts <- $(tt.contrasts.matrix)
-            colnames(jellyme_contrasts) <- $(tt.contrasts.termnames)
+            colnames(jellyme_contrasts) <- $(coefnames(tt.contrasts))
             rownames(jellyme_contrasts) <- $(tt.contrasts.levels)
             """
             # we need rdfname to be interpolated normally before the R macros stuff is called

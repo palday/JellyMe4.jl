@@ -168,10 +168,12 @@ function sexp(::Type{RClass{:glmerMod}},
              "log", "identity", "inverse", "sqrt",
              "cloglog"] || throw(ArgumentError("Link $urlink not supported"))
 
-    if length(m.optsum.initial) - length(m.β) < 0
+    if length(m.optsum.final) == length(m.θ)
         nAGQ = 0
+        maxeval = 1
     else
         nAGQ = m.optsum.nAGQ
+        maxeval = 0
     end
 
     # if !isempty(m.sqrtwts)
@@ -195,10 +197,10 @@ function sexp(::Type{RClass{:glmerMod}},
     length(jellyme4_weights) > 0 || (jellyme4_weights = nothing)
     fval = m.optsum.fmin
     feval = m.optsum.feval
+    # TODO support things besides NLopt
     conv = m.optsum.returnvalue == :SUCCESS ? 0 : 1
     optimizer = String(m.optsum.optimizer)
     message = "fit with MixedModels.jl"
-    rsteps = 1
 
     betastart = nAGQ > 0 ? "fixef=jellyme4_beta, " : ""
 
@@ -217,8 +219,9 @@ function sexp(::Type{RClass{:glmerMod}},
                                family=$family(link="$link"),
                                nAGQ=$(nAGQ),
                                weights=jellyme4_weights,
-                               control=lme4::glmerControl(optCtrl=list(maxeval=$(rsteps)),
-                                                          $(join(MERCONTROL_OPTIONS,","))),
+                               control=lme4::glmerControl($(join(MERCONTROL_OPTIONS,",")),
+                                                          optimizer="nloptwrap",
+                                                          optCtrl=list(maxeval=$(maxeval))),
                                 start=list($(betastart)theta=jellyme4_theta))
          jellyme4_mod@optinfo\$feval <- $(feval)
          jellyme4_mod@optinfo\$message <- "$(message)"
