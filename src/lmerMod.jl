@@ -1,23 +1,3 @@
-import MixedModels: LinearMixedModel,
-                    setθ!,
-                    updateL!
-import RCall: rcopy,
-              RClass,
-              rcopytype,
-              reval,
-              S4Sxp,
-              sexp,
-              protect,
-              unprotect,
-              sexpclass,
-              @rput,
-              @rget,
-              @R_str
-
-# if RCall is available, then so is DataFrames
-import DataFrames: DataFrame
-import Tables: ColumnTable
-
 # from R
 # note that weights are not extracted
 # TODO: document weights issue and warn
