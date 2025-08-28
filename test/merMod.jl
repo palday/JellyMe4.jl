@@ -1,14 +1,14 @@
-@testset ExtendedTestSet "merMod" begin
-    # this is available in MixedModels.dataset(:sleepstudy) but with different
-    # capitalization than in R
-    sleepstudy = rcopy(R"lme4::sleepstudy")
-    jlmm = lmm(@formula(Reaction ~ 1 + round(Days) + (1 | Subject)), sleepstudy;
-               REML=false, progress=false)
-    @testset "bare model" begin
-        @test_throws ArgumentError (@rput jlmm)
-    end
-    @testset "reversed tuple" begin
-        jm = (sleepstudy, jlmm)
-        @test_throws ArgumentError (@rput jm)
-    end
+# this is available in MixedModels.dataset(:sleepstudy) but with different
+# capitalization than in R
+sleepstudy = rcopy(R"lme4::sleepstudy")
+jlmm = lmm(@formula(Reaction ~ 1 + round(Days) + (1 | Subject)), sleepstudy;
+           REML=false, progress=false)
+
+@testset "bare model" begin
+    @test_throws ArgumentError (@rput jlmm)
+end
+
+@testset "reversed tuple" begin
+    jm = (sleepstudy, jlmm)
+    @test_throws ArgumentError (@rput jm)
 end
