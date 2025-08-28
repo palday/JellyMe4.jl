@@ -57,7 +57,7 @@
         @testset "sorting by n BLUPs vs. n groups" begin
             @rput kb07
             # ignore the boundary fit
-            @suppress rlmm = rcopy(R"rlmm <- lmer(rt_trunc ~ 1 + (1|subj)+(1+load+prec+spkr|item), $(kb07), REML=FALSE)")
+            rlmm = @suppress rcopy(R"rlmm <- lmer(rt_trunc ~ 1 + (1|subj)+(1+load+prec+spkr|item), $(kb07), REML=FALSE)")
             @test rcopy(R"fitted(rlmm)") ≈ fitted(rlmm)
             @test rcopy(R"deviance(rlmm)") ≈ objective(rlmm)
             @test all(isapprox.(collect(VarCorr(rlmm).σρ.item.σ),
@@ -71,7 +71,7 @@
             cake <- lme4::cake
             cake\$rr <- with(cake, replicate:recipe)
             """)
-            rlmm = rcopy(R"fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)")
+            rlmm = @suppress rcopy(R"fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE)")
             @test fixef(rlmm) ≈ rcopy(R"fixef(fm1)")
             # rlmm = rcopy(R"""fm1 <- lme4::lmer(angle ~ recipe * temperature + (1|rr), cake, REML= FALSE,
             #                              contrasts=list(temperature=contr.helmert))""");
@@ -83,7 +83,7 @@
             cake <- lme4::cake
             cake\$rr <- with(cake, replicate:recipe)
             """)
-            rlmm = rcopy(R"fm1 <- lme4::lmer(angle ~ (recipe + temperature)^2 + (1|rr), cake, REML= FALSE)")
+            rlmm = @suppress rcopy(R"fm1 <- lme4::lmer(angle ~ (recipe + temperature)^2 + (1|rr), cake, REML= FALSE)")
             @test fixef(rlmm) ≈ rcopy(R"fixef(fm1)")
         end
 
@@ -92,7 +92,7 @@
             # the distinct terms are handled the same way in both languages, so everything is fine.
             # printing differs a lot between languages, but that's life
 
-            reval("""
+            @suppress reval("""
             machines <- as.data.frame(nlme::Machines)
             mach <- lme4::lmer(score ~ Machine + (Machine || Worker), machines, REML=FALSE)
             """)
@@ -117,7 +117,7 @@
             @rput pastes
             jlmm = lmm(@formula(strength ~ 1 + (1 | batch / cask)), pastes;
                        REML=false, progress=false)
-            rlmm = rcopy(R"lme4::lmer(strength ~ 1 + (1 | batch / cask), pastes,REML=FALSE)")
+            rlmm = @suppress rcopy(R"lme4::lmer(strength ~ 1 + (1 | batch / cask), pastes,REML=FALSE)")
 
             @test jlmm.θ ≈ rlmm.θ atol = 0.001
             @test objective(jlmm) ≈ objective(rlmm) atol = 0.001
@@ -143,7 +143,6 @@
 
         refit!(jlmm; REML=false, progress=false)
         jm = (jlmm, sleepstudy)
-        # MAXEVAL
         @rput jm
         @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
         @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
@@ -157,13 +156,12 @@
         @testset "transformations" begin
             sleepstudy[!, :Days2] = sleepstudy.Days .+ 1
             @rput sleepstudy
-            R"m <- lme4::lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
+            @suppress R"m <- lme4::lmer(log10(Reaction) ~ 1 + log(Days2) + (1 + log(Days2)|Subject),sleepstudy,REML=FALSE)"
             jlmm = lmm(@formula(log10(Reaction) ~
                                 1 + log(Days2) +
                                 (1 + log(Days2) | Subject)),
                        sleepstudy; REML=false, progress=false)
             jm = (jlmm, sleepstudy)
-            # MAXEVAL
             @rput jm
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
             @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
@@ -179,8 +177,8 @@
             jlmm = lmm(@formula(rt_trunc ~ 1 + (1 | subj) + (1 + load + prec + spkr | item)),
                        kb07; progress=false)
             jm = (jlmm, kb07)
-            # MAXEVAL
-            @rput jm
+            # suppress singular warning
+            @suppress @rput jm
             @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
             @test rcopy(R"deviance(jm)") ≈ objective(jlmm)
             @test all(isapprox.(collect(VarCorr(jlmm).σρ.item.σ),
@@ -199,7 +197,7 @@
                        cake; REML=false, progress=false,
                        contrasts=Dict(:temperature => SeqDiffCoding()))
             jm = (jlmm, cake)
-            # MAXEVAL
+            # suppress contrast info
             @suppress @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
         end
@@ -209,7 +207,6 @@
             jlmm = lmm(@formula(score ~ 1 + Machine + (1 + fulldummy(Machine) | Worker)),
                        machines; progress=false)
             rlmm = (jlmm, machines)
-            # MAXEVAL
             @rput rlmm
             rlmmrepca = rcopy(R"summary(rePCA(rlmm))$Worker$importance[3,]")
             @test rlmmrepca ≈ only(MixedModels.rePCA(jlmm; corr=false)) atol = 0.05
@@ -225,7 +222,6 @@
                 jlmm = lmm(@formula(Reaction ~ 1 + Days + zerocorr(1 + Days | Subject)),
                            sleepstudy; REML=false, progress=false)
                 rlmm = (jlmm, sleepstudy)
-                # MAXEVAL
                 @rput rlmm
                 @test rcopy(R"""!is(rlmm,"merModLmerTest")""")
                 @test only(ranef(jlmm))' ≈ Matrix(rcopy(R"ranef(rlmm)$Subject"))
@@ -242,7 +238,6 @@
                 @testset "afex pre-enabled" begin
                     _set_lmer("afex::lmer_alt")
                     rlmm = (jlmm, machines)
-                    # MAXEVAL
                     @rput rlmm
                     @test only(ranef(jlmm))' ≈ Matrix(rcopy(R"ranef(rlmm)$Worker"))
                     @test fixef(jlmm) ≈ rcopy(R"fixef(rlmm)")
@@ -276,7 +271,6 @@
             jlmm = lmm(@formula(strength ~ 1 + (1 | batch / cask)), pastes;
                        REML=false, progress=false)
             rlmm = (jlmm, pastes)
-            # MAXEVAL
             @rput rlmm
 
             @test jlmm.θ ≈ rcopy(R"""getME(rlmm, "theta")""") atol = 0.001
