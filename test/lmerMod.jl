@@ -198,7 +198,7 @@
                        contrasts=Dict(:temperature => SeqDiffCoding()))
             jm = (jlmm, cake)
             # MAXEVAL
-            @rput jm
+            @suppress @rput jm
             @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
         end
 

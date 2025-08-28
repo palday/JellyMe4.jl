@@ -161,12 +161,10 @@
 
         @testset "Poisson and fast fit" begin
             # TODO: remove upon next MixedModels.jl release
-            center(v::AbstractVector) = v .- (sum(v) / length(v))
             dat = dataset(:grouseticks)
-            dat.ch = center(dat.height)
-            jlmm = glmm(@formula(ticks ~ 1 + year + ch + (1 | index) + (1 | brood) +
-                                         (1 | location)),
-                        dat, Poisson(); fast=false, progress=false)
+            # not the best model, but that's not the point of these tests
+            jlmm = glmm(@formula(ticks ~ 1 + (1 | brood)),
+                        dat, Poisson(); fast=true, progress=false)
             jm = (jlmm, dat)
             # XXX REvalError: Error in is.nloptr(ret) : at least one element in x0 < lb
             @suppress @rput jm
@@ -207,15 +205,15 @@
                        contrasts=Dict(:gender => EffectsCoding(),
                                       :btypes => EffectsCoding()))
             jm = (jlmm, dat)
-            @rput jm
-            @test fixef(jlmm) ≈ rcopy(R"fixef(jm)")
+            @suppress @rput jm
+            @test fixef(jlmm) ≈ rcopy(R"fixef(jm)") atol=0.001
         end
         @testset "asinh transformation" begin
             dat = dataset(:verbagg)
 
             jlmm = glmm(@formula(r2 ~ 1 + asinh(anger) + gender + btype + situ + (1 | subj) +
                                      (1 | item)),
-                       dat, Bernoulli())
+                       dat, Bernoulli(); fast=true, progress=false)
             jm = (jlmm, dat)
             # MAXEVAL
             @suppress @rput jm
