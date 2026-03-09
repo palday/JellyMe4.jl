@@ -43,7 +43,7 @@ jobs:
         with:
           version: ${{ matrix.version }}
       - name: Cache
-        uses: julia-actions/cache@v2
+        uses: julia-actions/cache@v3
         with:
             cache-compiled: "true"
       - name: Build
