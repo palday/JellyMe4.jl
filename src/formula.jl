@@ -30,24 +30,24 @@ function convert_julia_to_r(f::StatsModels.FormulaTerm)::AbstractString
 
             else
                 terms_assemble = true
-                for (idx, tt) in enumerate(trm.term.lhs.terms)
+                for (jdx, tt) in enumerate(trm.term.lhs.terms)
                     if tt isa CategoricalTerm && size(tt.contrasts.matrix, 2) != 2
                         AFEX_INSTALLED ||
                             throw(ArgumentError("zerocorr for factors with more than 2 levels not supported without using afex::lmer_alt"))
 
                         @info "Swapping to afex::lmer_alt instead of lme4::g/lmer from here on out..."
-                        global GLMER = global LMER = "afex::lmer_alt"
+                        global LMER = "afex::lmer_alt"
                         rhs[idx] = _fulldummy2dummy(trm.term.lhs, trm.term.rhs.sym, "||")
                         terms_assemble = false
                         break
                     elseif tt isa InterceptTerm
-                        terms[idx] = "( 1 | $grp)"
+                        terms[jdx] = "( 1 | $grp)"
                     elseif tt isa CategoricalTerm &&
                            tt.contrasts isa
                            StatsModels.ContrastsMatrix{StatsModels.FullDummyCoding}
-                        terms[idx] = "( 0 + dummy($(tt.sym), levels($(tt.sym))) | $grp)"
+                        terms[jdx] = "( 0 + dummy($(tt.sym), levels($(tt.sym))) | $grp)"
                     else
-                        terms[idx] = "( 0 + $(tt.sym) | $grp)"
+                        terms[jdx] = "( 0 + $(tt.sym) | $grp)"
                     end
                 end
 
@@ -81,7 +81,7 @@ function convert_julia_to_r(f::StatsModels.FormulaTerm)::AbstractString
     return formula = replace(formula, "&" => ":")
 end
 
-# NOTE: this is known to yet to work properly!
+# NOTE: cbind and complex transformations in R formulas may not convert correctly
 function convert_r_to_julia(f::RObject{LangSxp})::StatsModels.FormulaTerm
     _, lhs, rhs = rcopy(R"as.character($f)")
     cbind = match(r"cbind\((.*),(.*)\)", lhs)

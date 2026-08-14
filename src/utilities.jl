@@ -14,6 +14,10 @@ function categorical!(df::DataFrame, col::Symbol)
     return transform!(df, col => categorical; renamecols=false)
 end
 
+function _has_call_arg(s, arg::AbstractString)
+    return rcopy(R"!is.null(tryCatch($(s)@call[[$(arg)]], error=function(e) NULL))")
+end
+
 _guarantee_array(val::AbstractArray) = val
 _guarantee_array(val) = [val]
 
@@ -33,7 +37,7 @@ function get_r_contrasts(rdf)
     data = rcopy(rdf)
     # get categorical columns
     cnames = [c for c in propertynames(data) if typeof(data[!, c]) <: CategoricalArray]
-    pairs = []
+    pairs = Pair{Symbol,HypothesisCoding}[]
     for c in cnames
         @debug "" c
         levels = rcopyarray(R"rownames(contrasts($(rdf[c])))")
@@ -102,7 +106,7 @@ function _reorder_theta_from_lme4(θlme4, model)
 
     # extract the individual theta blocks
     start = 1
-    θs = []
+    θs = Vector{eltype(θlme4)}[]
     for r in rr
         finish = start + length(getθ(r)) - 1
         push!(θs, θlme4[start:finish])
