@@ -29,3 +29,4 @@ Manifest-v*.toml
 
 .vscode/
 *.*~
+coverage/lcov.info

@@ -65,6 +65,19 @@ kb07 = dataset(:kb07)
                             rcopy(R"""attr(VarCorr(rlmm)[["subj"]], "stddev")""")))
     end
 
+    @testset "weights error" begin
+        reval("rlmm_wt <- lme4::lmer(Reaction ~ Days + (1|Subject), sleepstudy, weights=rep(1, nrow(sleepstudy)))")
+        @test_throws ArgumentError rcopy(R"rlmm_wt")
+    end
+
+    @testset "contrasts in call" begin
+        reval(raw"""
+        cake <- lme4::cake
+        cake$rr <- with(cake, replicate:recipe)
+        """)
+        @test_logs (:warn, r"Contrasts must be specified") match_mode = :any rcopy(R"lme4::lmer(angle ~ recipe + (1|rr), cake, REML=FALSE, contrasts=list(recipe=contr.helmert(levels(cake$recipe))))")
+    end
+
     @testset "contrasts" begin
         reval("""
         cake <- lme4::cake
@@ -135,6 +148,13 @@ end
     jm = (jlmm, sleepstudy)
     # unfitted model
     @test_throws ArgumentError @rput(jm)
+
+    @testset "weights error" begin
+        wt_jlmm = lmm(@formula(Reaction ~ 1 + Days + (1 | Subject)), sleepstudy;
+                       wts=ones(nrow(sleepstudy)), progress=false)
+        wt_jm = (wt_jlmm, sleepstudy)
+        @test_throws ArgumentError @rput wt_jm
+    end
     fit!(jlmm; REML=true, progress=false)
     @rput jm
     @test rcopy(R"fitted(jm)") ≈ fitted(jlmm)
@@ -211,7 +231,17 @@ end
     end
 
     @testset "zerocorr" begin
-        # TODO: test fulldummy within a zerocorr when zerocorr is better supported
+        @testset "fulldummy with 2-level factor" begin
+            _set_lmer("lme4::lmer")
+            _set_afex_installed(false)
+            zc_df = DataFrame(y=randn(100),
+                              x=categorical(repeat(["a", "b"], 50)),
+                              g=string.(repeat(1:10, 10)))
+            zc_jlmm = lmm(@formula(y ~ 1 + x + zerocorr(0 + fulldummy(x) | g)),
+                          zc_df; progress=false)
+            formula_str = JellyMe4.convert_julia_to_r(zc_jlmm.formula)
+            @test occursin("dummy", formula_str)
+        end
 
         @testset "lme4" begin
             _set_lmer("lme4::lmer")

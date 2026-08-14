@@ -9,7 +9,8 @@ using Test
 using TestSetExtensions
 
 using GLM: Link
-using JellyMe4: _set_lmer, _set_afex_installed
+using CategoricalArrays: categorical, CategoricalArray
+using JellyMe4: _set_lmer, _set_afex_installed, categorical!
 using MixedModelsDatasets: MixedModelsDatasets, datasets
 using StatsModels: SeqDiffCoding
 using Tables: columntable
