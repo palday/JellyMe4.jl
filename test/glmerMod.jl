@@ -206,7 +206,7 @@ end
                                    :btypes => EffectsCoding()))
         jm = (jlmm, dat)
         @suppress @rput jm
-        @test fixef(jlmm) ≈ rcopy(R"fixef(jm)") atol = 0.001
+        @test all(isapprox.(fixef(jlmm), rcopy(R"fixef(jm)"); atol=0.001))
     end
     @testset "asinh transformation" begin
         dat = dataset(:verbagg)
