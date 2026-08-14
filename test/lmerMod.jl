@@ -151,7 +151,7 @@ end
 
     @testset "weights error" begin
         wt_jlmm = lmm(@formula(Reaction ~ 1 + Days + (1 | Subject)), sleepstudy;
-                       wts=ones(nrow(sleepstudy)), progress=false)
+                      wts=ones(nrow(sleepstudy)), progress=false)
         wt_jm = (wt_jlmm, sleepstudy)
         @test_throws ArgumentError @rput wt_jm
     end
@@ -234,7 +234,7 @@ end
         @testset "fulldummy with 2-level factor" begin
             _set_lmer("lme4::lmer")
             _set_afex_installed(false)
-            zc_df = DataFrame(y=randn(100),
+            zc_df = DataFrame(; y=randn(100),
                               x=categorical(repeat(["a", "b"], 50)),
                               g=string.(repeat(1:10, 10)))
             zc_jlmm = lmm(@formula(y ~ 1 + x + zerocorr(0 + fulldummy(x) | g)),

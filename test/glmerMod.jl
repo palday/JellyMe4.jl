@@ -223,9 +223,9 @@ end
 
     @testset "Gamma" begin
         sleepstudy_r = rcopy(R"lme4::sleepstudy")
-        m = @suppress GeneralizedLinearMixedModel(
-            @formula(Reaction ~ 1 + Days + (1 | Subject)),
-            sleepstudy_r, Gamma(), LogLink())
+        m = @suppress GeneralizedLinearMixedModel(@formula(Reaction ~ 1 + Days +
+                                                                      (1 | Subject)),
+                                                  sleepstudy_r, Gamma(), LogLink())
         m.optsum.feval = 1
         jm_gamma = (m, sleepstudy_r)
         @test_throws ArgumentError @rput jm_gamma

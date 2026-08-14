@@ -2,7 +2,6 @@
 # note that weights are not extracted
 # TODO: document weights issue and warn
 function RCall.rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
-
     if _has_call_arg(s, "weights")
         throw(ArgumentError("weights are not supported"))
     end

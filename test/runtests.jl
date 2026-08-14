@@ -7,11 +7,11 @@ using Aqua
                   ambiguities=false,
                   deps_compat=(check_extras=true,),
                   piracies=(treat_as_own=[MixedModel, LinearMixedModel,
-                                         GeneralizedLinearMixedModel],))
+                                          GeneralizedLinearMixedModel],))
 end
 
 @testset "utilities" begin
-    df = DataFrame(a=["x", "y", "z"], b=["p", "q", "r"])
+    df = DataFrame(; a=["x", "y", "z"], b=["p", "q", "r"])
     categorical!(df, [:a, :b])
     @test df.a isa CategoricalArray
     @test df.b isa CategoricalArray
