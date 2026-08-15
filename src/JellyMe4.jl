@@ -89,6 +89,18 @@ function _set_afex_installed(s)
     return global AFEX_INSTALLED = s
 end
 
+const R_FAMILY_MAP = Dict("Binomial" => Binomial,
+                          "Poisson" => Poisson)
+
+const R_LINK_MAP = Dict("LogitLink" => LogitLink,
+                        "ProbitLink" => ProbitLink,
+                        "CauchitLink" => CauchitLink,
+                        "CloglogLink" => CloglogLink,
+                        "LogLink" => LogLink,
+                        "IdentityLink" => IdentityLink,
+                        "InverseLink" => InverseLink,
+                        "SqrtLink" => SqrtLink)
+
 const MERCONTROL_OPTIONS = ["""calc.derivs=FALSE""",
                             """check.nobs.vs.rankZ = "warning" """,
                             """check.nobs.vs.nlev = "warning" """,

@@ -1,47 +1,24 @@
 # # from R
 function RCall.rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
-    data = nothing
-    # try
-    #     data = rcopy(s[:frame]);
-    # catch err
-    #     if !isa(err, DimensionMismatch) # matrix columns -- cbind!
-    #         throw(err)
-    #     end
-    # go back up to the original data frame
-    # this will only work if that data frame is still available in the
-    # current environment. There may be a better way to unwind this
-    # but that will involve more R black magic
+    # s[:frame] doesn't work for cbind models (DimensionMismatch),
+    # so we retrieve the original data from the call
     data = rcopy(R"eval($(s[:call][:data]))")
-    # end
 
-    try
-        contrasts = rcopy(s[:call][:contrasts])
-        @error "Contrasts must be specified in the dataframe, not the glmer() call"
-    catch err
-        if !isa(err, BoundsError) # this is the error we were expecting
-            rethrow(err)
-        end
-        # no extra contrasts defined, we continue on our way
+    if _has_call_arg(s, "contrasts")
+        @warn "Contrasts must be specified in the dataframe, not the glmer() call"
     end
 
     contrasts = get_r_contrasts(s[:frame])
 
-    wts = []
-    try
-        wts = rcopy(s[:call][:weights])
-        wts = data[!, wts]
-    catch err
-        if !isa(err, BoundsError)
-            rethrow(err)
-        end
-        # no weights defined, we continue on our way
+    wts = if _has_call_arg(s, "weights")
+        wts_name = rcopy(s[:call][:weights])
+        data[!, wts_name]
+    else
         try
-            wts = rcopy(s[:resp][:n])
+            rcopy(s[:resp][:n])
         catch err
-            if !isa(err, BoundsError)
-                rethrow(err)
-            end
-            # no weights here either, we continue on our way
+            isa(err, BoundsError) || rethrow(err)
+            Float64[]
         end
     end
 
@@ -59,14 +36,13 @@ function RCall.rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
         throw(ArgumentError("Unknown and hence unsupported family: $family"))
     end
 
-    family = eval(Symbol(family))
+    family = R_FAMILY_MAP[family]
 
     link = rcopy(R"$(s[:resp])$family$link")
     link in ["logit", "probit", "cauchit",
              "log", "identity", "inverse", "sqrt",
-             "cloglog"] || throw(ArgumentError("Link $urlink not supported"))
-    link = titlecase(link) * "Link"
-    link = eval(Symbol(link))
+             "cloglog"] || throw(ArgumentError("Link $link not supported"))
+    link = R_LINK_MAP[titlecase(link) * "Link"]
 
     nAGQ = rcopy(s[:devcomp][:dims][:nAGQ])
     fast = nAGQ == 0
@@ -74,7 +50,7 @@ function RCall.rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
         nAGQ = 1
     end
 
-    m = GeneralizedLinearMixedModel(f, columntable(data), family(), link(); wts=wts)
+    m = GeneralizedLinearMixedModel(f, columntable(data), family(), link(); weights=wts)
     m.optsum.feval = rcopy(s[:optinfo][:feval])
     θ = rcopyarray(s[:theta])
     β = rcopyarray(s[:beta])
@@ -89,7 +65,7 @@ function RCall.rcopy(::Type{GeneralizedLinearMixedModel}, s::Ptr{S4Sxp})
 
     m.optsum.final = fast ? θ : [β; θ]
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
-    m.optsum.returnvalue = rcopy(s[:optinfo][:conv][:opt]) == 0 ? :FAILURE : :SUCCESS
+    m.optsum.returnvalue = rcopy(s[:optinfo][:conv][:opt]) == 0 ? :SUCCESS : :FAILURE
     m.optsum.fmin = rcopy(s[:devcomp][:cmp][:dev])
     m.optsum.nAGQ = nAGQ
     setpar! = fast ? setθ! : setβθ!

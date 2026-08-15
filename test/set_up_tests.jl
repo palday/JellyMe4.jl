@@ -9,9 +9,9 @@ using Test
 using TestSetExtensions
 
 using GLM: Link
-using JellyMe4: _set_lmer, _set_afex_installed
+using CategoricalArrays: categorical, CategoricalArray
+using JellyMe4: _set_lmer, _set_afex_installed, categorical!
 using MixedModelsDatasets: MixedModelsDatasets, datasets
-using StatsBase: zscore
 using StatsModels: SeqDiffCoding
 using Tables: columntable
 
@@ -19,7 +19,6 @@ const GLMM = GeneralizedLinearMixedModel
 const LMM = LinearMixedModel
 
 dataset(x) = DataFrame(MixedModelsDatasets.dataset(x))
-logistic(x) = 1 / (1 + exp(-x))
 
 # this should only occur on CIs
 # the Linux CI installs lme4 via apt beforehand

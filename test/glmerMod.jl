@@ -25,7 +25,11 @@
             #               family = binomial, data = cbpp)
             # """
 
-            @testset "cbind" begin end
+            @testset "cbind" begin
+                f = R"cbind(y, n - y) ~ x + (1|g)"
+                jf = JellyMe4.convert_r_to_julia(f)
+                @test jf isa StatsModels.FormulaTerm
+            end
 
             @testset "proportion computed in line" begin end
         end
@@ -83,6 +87,29 @@
         # 7.5% difference isn't great....
         @test stderror(rlmm) ≈ rcopy(R"""coef(summary(rlmm))[,"Std. Error"]""") rtol = 0.075
         @test rcopy(R"logLik(rlmm)") ≈ loglikelihood(rlmm) atol = 0.05
+    end
+
+    @testset "contrasts in call" begin
+        @suppress reval(raw"""
+        cbpp$rate <- with(cbpp, incidence/size)
+        """)
+        @test_logs (:warn, r"Contrasts must be specified") match_mode = :any rcopy(R"glmer(rate ~ period + (1|herd), weights=size, family=binomial, data=cbpp, contrasts=list(period=contr.helmert(levels(cbpp$period))))")
+    end
+
+    @testset "Gamma family error" begin
+        @suppress reval("""
+        rlmm_gamma <- glmer(Reaction ~ Days + (1|Subject),
+                            data=lme4::sleepstudy, family=Gamma(link="log"))
+        """)
+        @test_throws ArgumentError rcopy(R"rlmm_gamma")
+    end
+
+    @testset "double-bar categorical" begin
+        @suppress reval("""
+        rlmm_db <- glmer(r2 ~ Anger + (btype || id),
+                         family=binomial, data=VerbAgg)
+        """)
+        @suppress @test_throws ArgumentError rcopy(R"rlmm_db")
     end
 end
 
@@ -194,7 +221,15 @@ end
 
     @testset "InverseGaussian" begin end
 
-    @testset "Gamma" begin end
+    @testset "Gamma" begin
+        sleepstudy_r = rcopy(R"lme4::sleepstudy")
+        m = @suppress GeneralizedLinearMixedModel(@formula(Reaction ~ 1 + Days +
+                                                                      (1 | Subject)),
+                                                  sleepstudy_r, Gamma(), LogLink())
+        m.optsum.feval = 1
+        jm_gamma = (m, sleepstudy_r)
+        @test_throws ArgumentError @rput jm_gamma
+    end
 
     @testset "contrasts" begin
         dat = dataset(:verbagg)
@@ -206,7 +241,7 @@ end
                                    :btypes => EffectsCoding()))
         jm = (jlmm, dat)
         @suppress @rput jm
-        @test fixef(jlmm) ≈ rcopy(R"fixef(jm)") atol = 0.001
+        @test all(isapprox.(fixef(jlmm), rcopy(R"fixef(jm)"); atol=0.001))
     end
     @testset "asinh transformation" begin
         dat = dataset(:verbagg)

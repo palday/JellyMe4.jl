@@ -2,27 +2,12 @@
 # note that weights are not extracted
 # TODO: document weights issue and warn
 function RCall.rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
-
-    # these try blocks should probably be changed to an examination of the indices
-    # this only extracts the name within the call, not the actual weights
-    try
-        wts = rcopy(s[:call][:weights])
-        @error "weights are not supported"
-    catch err
-        if !isa(err, BoundsError) # this is the error we were expecting
-            rethrow(err)
-        end
-        # no weights defined, we continue on our way
+    if _has_call_arg(s, "weights")
+        throw(ArgumentError("weights are not supported"))
     end
 
-    try
-        contrasts = rcopy(s[:call][:contrasts])
-        @error "Contrasts must be specified in the dataframe, not the lmer() call"
-    catch err
-        if !isa(err, BoundsError) # this is the error we were expecting
-            rethrow(err)
-        end
-        # no extra contrasts defined, we continue on our way
+    if _has_call_arg(s, "contrasts")
+        @warn "Contrasts must be specified in the dataframe, not the lmer() call"
     end
 
     # for some reason this doesn't always give a formula with lmerTest
@@ -48,7 +33,7 @@ function RCall.rcopy(::Type{LinearMixedModel}, s::Ptr{S4Sxp})
     # I'm wondering if this be filled in from the Julia side
     m.optsum.final = rcopyarray(s[:optinfo][:val])
     m.optsum.optimizer = Symbol("$(rcopy(s[:optinfo][:optimizer])) (lme4)")
-    m.optsum.returnvalue = rcopy(s[:optinfo][:conv][:opt]) == 0 ? :FAILURE : :SUCCESS
+    m.optsum.returnvalue = rcopy(s[:optinfo][:conv][:opt]) == 0 ? :SUCCESS : :FAILURE
     m.optsum.fmin = reml ? rcopy(s[:devcomp][:cmp][:REML]) : rcopy(s[:devcomp][:cmp][:dev])
     return updateL!(setθ!(m, θ))
 end
@@ -65,7 +50,7 @@ function RCall.sexp(::Type{RClass{:lmerMod}},
                     x::Tuple{LinearMixedModel{T},DataFrame}) where {T}
     m, tbl = x
     if !isempty(m.sqrtwts)
-        @error "weights are not currently supported"
+        throw(ArgumentError("weights are not currently supported"))
     end
 
     m.optsum.feval > 0 || throw(ArgumentError("Model must be fitted"))
